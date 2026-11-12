@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="split" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2588ff"/>
+      <stop offset="0.52" stop-color="#111827"/>
+      <stop offset="1" stop-color="#ff4f9a"/>
+    </linearGradient>
+    <clipPath id="flag">
+      <path d="M19 12 49 15 46 38 19 35Z"/>
+    </clipPath>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="#080d19"/>
+  <path d="M0 44 21 64H0Z" fill="#2588ff" opacity=".9"/>
+  <path d="M64 20 64 64H43Z" fill="#ff4f9a" opacity=".9"/>
+  <path d="M13 13V53" fill="none" stroke="#f8fafc" stroke-width="4" stroke-linecap="round"/>
+  <path d="M17 14 50 17 47 40 17 36Z" fill="url(#split)"/>
+  <g clip-path="url(#flag)">
+    <rect x="17" y="12" width="36" height="30" fill="#f8fafc"/>
+    <path d="M19 12h8v8h-8zm16 0h8v8h-8zM27 20h8v8h-8zm16 0h8v8h-8zM19 28h8v8h-8zm16 0h8v8h-8z" fill="#111827"/>
+    <path d="M27 12h8v8h-8zm16 0h8v8h-8zM19 20h8v8h-8zm16 0h8v8h-8zM27 28h8v8h-8zm16 0h8v8h-8z" fill="#111827" opacity=".96"/>
+  </g>
+  <path d="M10 47h16M38 47h16" stroke="#f8fafc" stroke-width="2.5" stroke-linecap="round" opacity=".9"/>
+</svg>

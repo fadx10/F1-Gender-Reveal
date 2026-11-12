@@ -190,8 +190,9 @@
 }
 @keyframes race-winner {
   0% { transform: translateX(0); }
-  18% { transform: translateX(7vw); }
-  42% { transform: translateX(11vw); }
+  18% { transform: translateX(3vw); }
+  42% { transform: translateX(5vw); }
+  50% { transform: translateX(9vw); }
   66% { transform: translateX(14vw); }
   82% { transform: translateX(23vw); }
   100% { transform: translateX(min(55vw, 620px)); }
@@ -199,7 +200,8 @@
 @keyframes race-chaser {
   0% { transform: translateX(3vw); }
   18% { transform: translateX(8vw); }
-  42% { transform: translateX(5vw); }
+  42% { transform: translateX(8vw); }
+  50% { transform: translateX(6vw); }
   66% { transform: translateX(4vw); }
   82% { transform: translateX(3vw); }
   100% { transform: translateX(0); }

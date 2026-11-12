@@ -1,6 +1,6 @@
 import React from 'react';
 import { GenderRevealConfig } from '../types';
-import { Play, Trophy, Volume2, VolumeX, Settings, Heart, Flag } from 'lucide-react';
+import { Play, Trophy, Volume2, VolumeX, Settings, Heart } from 'lucide-react';
 
 interface IntroScreenProps {
   config: GenderRevealConfig;
@@ -142,17 +142,12 @@ export const IntroScreen: React.FC<IntroScreenProps> = ({
               </div>
             </div>
           </button>
-
-          <div className="flex items-center gap-2 text-xs text-slate-400 mt-2">
-            <Flag className="w-3.5 h-3.5 text-amber-400" />
-            <span>Turn volume up for F1 engine revs, tire squeals, and team radio</span>
-          </div>
         </div>
       </main>
 
       {/* Footer */}
       <footer className="relative z-10 max-w-5xl mx-auto w-full pb-2 text-center text-xs text-slate-500">
-        <span>The Reveal Grand Prix · Special 30-Second Simulated Formula 1 Broadcast</span>
+        <span>Made with love by Fahad</span>
       </footer>
     </div>
   );

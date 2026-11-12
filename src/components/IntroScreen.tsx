@@ -75,7 +75,7 @@ export const IntroScreen: React.FC<IntroScreenProps> = ({
 
         {/* Hero Headline */}
         <h1 className="font-display text-4xl sm:text-6xl md:text-7xl font-black tracking-tight text-white max-w-3xl leading-[1.08] text-balance mb-4">
-          Lights Out Showdown: <br />
+          Gender Reveal <br />
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-white to-pink-400 drop-shadow-[0_4px_25px_rgba(255,255,255,0.2)]">
             Team Boy vs Team Girl
           </span>

@@ -101,7 +101,7 @@ export const IntroScreen: React.FC<IntroScreenProps> = ({
               TEAM BOY RACING
             </div>
             <div className="text-[11px] sm:text-xs font-semibold text-blue-200 mt-1">
-              Car #1
+              
             </div>
 
           </div>
@@ -120,7 +120,7 @@ export const IntroScreen: React.FC<IntroScreenProps> = ({
               TEAM GIRL RACING
             </div>
             <div className="text-[11px] sm:text-xs font-semibold text-pink-200 mt-1">
-              Car #1
+              
             </div>
 
           </div>

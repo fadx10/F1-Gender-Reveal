@@ -132,9 +132,9 @@ export default function App() {
 
           <F1RaceTrack
             winner={config.winner}
-            onTelemetryUpdate={(t) => {
+            onTelemetryUpdate={(t, elapsed) => {
               setTelemetry(t);
-              setElapsedSeconds((prev) => Math.min(30, prev + 0.016));
+              setElapsedSeconds(Math.min(30, elapsed));
             }}
             onRadioMessage={(m) => setRadioMessage(m)}
             onRaceFinish={handleRaceFinish}

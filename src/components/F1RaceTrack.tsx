@@ -4,7 +4,7 @@ import { f1Sound } from '../utils/audio';
 
 interface F1RaceTrackProps {
   winner: GenderWinner;
-  onTelemetryUpdate: (telemetry: RaceTelemetry) => void;
+  onTelemetryUpdate: (telemetry: RaceTelemetry, elapsedSeconds: number) => void;
   onRadioMessage: (msg: RaceRadioMessage) => void;
   onRaceFinish: () => void;
 }
@@ -43,6 +43,9 @@ export const F1RaceTrack: React.FC<F1RaceTrackProps> = ({
 
     let animId: number;
     let startTime: number | null = null;
+    let lastFrameTime: number | null = null;
+    let lastTelemetryTime = -Infinity;
+    let finishTimeout: number | null = null;
     const RACE_DURATION = 30.0;
 
     // Track scroll offset for illusion of infinite 330 km/h speed
@@ -112,11 +115,14 @@ export const F1RaceTrack: React.FC<F1RaceTrackProps> = ({
     });
 
     const render = (timestamp: number) => {
-      if (!startTime) startTime = timestamp;
+      if (startTime === null) startTime = timestamp;
       const elapsed = (timestamp - startTime) / 1000;
+      const deltaSeconds = lastFrameTime === null ? 0 : Math.min((timestamp - lastFrameTime) / 1000, 0.05);
+      const frameScale = deltaSeconds * 60;
+      lastFrameTime = timestamp;
 
-      // High-speed asphalt scroll rate (330 km/h)
-      trackScroll += 48;
+      // High-speed asphalt scroll rate (330 km/h), normalized to elapsed time.
+      trackScroll += 48 * frameScale;
       trackCurvature = Math.sin(elapsed * 0.7) * 45;
 
       let p1Team: 'boy' | 'girl' = firstLeader;
@@ -314,19 +320,20 @@ export const F1RaceTrack: React.FC<F1RaceTrackProps> = ({
             type: 'finish',
             team: finalWinner,
           });
-          setTimeout(() => {
+          finishTimeout = window.setTimeout(() => {
             onRaceFinish();
           }, 700);
         }
       }
 
       // Smooth lerp car positions
-      carBoy.x += (carBoy.targetX - carBoy.x) * 0.08;
-      carBoy.y += (carBoy.targetY - carBoy.y) * 0.08;
+      const positionBlend = 1 - Math.pow(1 - 0.08, frameScale);
+      carBoy.x += (carBoy.targetX - carBoy.x) * positionBlend;
+      carBoy.y += (carBoy.targetY - carBoy.y) * positionBlend;
       carBoy.steerAngle = (carBoy.targetY - carBoy.y) * 0.04;
 
-      carGirl.x += (carGirl.targetX - carGirl.x) * 0.08;
-      carGirl.y += (carGirl.targetY - carGirl.y) * 0.08;
+      carGirl.x += (carGirl.targetX - carGirl.x) * positionBlend;
+      carGirl.y += (carGirl.targetY - carGirl.y) * positionBlend;
       carGirl.steerAngle = (carGirl.targetY - carGirl.y) * 0.04;
 
       // Telemetry update
@@ -334,22 +341,26 @@ export const F1RaceTrack: React.FC<F1RaceTrackProps> = ({
       const speed2 = Math.floor(320 + Math.cos(elapsed * 3) * 10);
       f1Sound.setEngineRpm(0.4 + (speed1 / 340) * 0.6);
 
-      onTelemetryUpdate({
-        p1: p1Team,
-        p2: p1Team === 'boy' ? 'girl' : 'boy',
-        gapSeconds: Number(gap.toFixed(3)),
-        lap: currentLap,
-        totalLaps: 3,
-        boySpeed: p1Team === 'boy' ? speed1 : speed2,
-        girlSpeed: p1Team === 'girl' ? speed1 : speed2,
-        boyDrs: carBoy.drs,
-        girlDrs: carGirl.drs,
-        sector: elapsed % 10 < 3.3 ? 1 : elapsed % 10 < 6.6 ? 2 : 3,
-      });
+      // React telemetry is sampled at 10 Hz; canvas animation remains at display refresh rate.
+      if (elapsed - lastTelemetryTime >= 0.1 || elapsed >= RACE_DURATION) {
+        onTelemetryUpdate({
+          p1: p1Team,
+          p2: p1Team === 'boy' ? 'girl' : 'boy',
+          gapSeconds: Number(gap.toFixed(3)),
+          lap: currentLap,
+          totalLaps: 3,
+          boySpeed: p1Team === 'boy' ? speed1 : speed2,
+          girlSpeed: p1Team === 'girl' ? speed1 : speed2,
+          boyDrs: carBoy.drs,
+          girlDrs: carGirl.drs,
+          sector: elapsed % 10 < 3.3 ? 1 : elapsed % 10 < 6.6 ? 2 : 3,
+        }, Math.min(elapsed, RACE_DURATION));
+        lastTelemetryTime = elapsed;
+      }
 
       // Emit titanium sparks from cars during high speeds
       [carBoy, carGirl].forEach((car) => {
-        if (Math.random() < 0.5) {
+        if (Math.random() < 1 - Math.pow(1 - 0.5, frameScale)) {
           sparks.push({
             x: car.x - 70,
             y: car.y + (Math.random() - 0.5) * 16,
@@ -364,9 +375,9 @@ export const F1RaceTrack: React.FC<F1RaceTrackProps> = ({
       // Update sparks
       for (let i = sparks.length - 1; i >= 0; i--) {
         const s = sparks[i];
-        s.x += s.vx;
-        s.y += s.vy;
-        s.life -= 0.05;
+        s.x += s.vx * frameScale;
+        s.y += s.vy * frameScale;
+        s.life -= 0.05 * frameScale;
         if (s.life <= 0) sparks.splice(i, 1);
       }
 
@@ -427,6 +438,7 @@ export const F1RaceTrack: React.FC<F1RaceTrackProps> = ({
 
     return () => {
       cancelAnimationFrame(animId);
+      if (finishTimeout !== null) window.clearTimeout(finishTimeout);
       window.removeEventListener('resize', handleResize);
       f1Sound.stopEngine();
     };

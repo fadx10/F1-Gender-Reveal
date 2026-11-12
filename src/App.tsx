@@ -39,27 +39,24 @@ export default function App() {
     const urlDueParam = getParam('due') || getParam('date');
     const urlMessageParam = getParam('message');
 
-    let initialWinner: GenderWinner = 'boy';
-    if (urlWinnerParam) {
-      initialWinner = urlWinnerParam.toLowerCase().startsWith('g') ? 'girl' : 'boy';
-    } else {
-      try {
-        const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          if (parsed.winner) initialWinner = parsed.winner;
-        }
-      } catch {
-        // Fallback
-      }
+    let savedConfig: Partial<GenderRevealConfig> = {};
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) savedConfig = JSON.parse(saved) as Partial<GenderRevealConfig>;
+    } catch {
+      // Use defaults if saved settings are unavailable or invalid.
     }
+
+    const initialWinner: GenderWinner = urlWinnerParam
+      ? (urlWinnerParam.toLowerCase().startsWith('g') ? 'girl' : 'boy')
+      : savedConfig.winner === 'girl' ? 'girl' : 'boy';
 
     return {
       winner: initialWinner,
-      parentsNames: urlParentsParam || 'Mom & Dad',
-      babyDueDate: urlDueParam || 'Coming Soon',
-      customMessage: urlMessageParam || '',
-      circuitName: 'The Reveal Grand Prix Circuit',
+      parentsNames: urlParentsParam || savedConfig.parentsNames || 'Mom & Dad',
+      babyDueDate: urlDueParam || savedConfig.babyDueDate || 'Coming Soon',
+      customMessage: urlMessageParam || savedConfig.customMessage || '',
+      circuitName: savedConfig.circuitName || 'The Reveal Grand Prix Circuit',
     };
   });
 

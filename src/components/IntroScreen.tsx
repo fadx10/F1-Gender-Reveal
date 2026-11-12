@@ -1,148 +1,29 @@
 import React from 'react';
 import { GenderRevealConfig } from '../types';
-import { Play, Trophy, Volume2, VolumeX, Settings, Heart } from 'lucide-react';
-
-interface IntroScreenProps {
-  config: GenderRevealConfig;
-  isMuted: boolean;
-  onToggleMute: () => void;
-  onStartPlay: () => void;
-  onOpenOrganizer: () => void;
-}
-
-export const IntroScreen: React.FC<IntroScreenProps> = ({
-  config,
-  isMuted,
-  onToggleMute,
-  onStartPlay,
-  onOpenOrganizer,
-}) => {
-  return (
-    <div className="intro-screen relative h-[100dvh] min-h-0 w-full flex flex-col justify-between bg-gradient-to-b from-slate-950 via-[#070b14] to-slate-950 text-slate-100 overflow-hidden p-3 sm:p-5 lg:p-8">
-      {/* Background Track Ambience & Floodlights */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute -top-40 -left-40 w-96 h-96 bg-blue-600/20 rounded-full blur-[140px]" />
-        <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-pink-600/20 rounded-full blur-[140px]" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-red-600/10 rounded-full blur-[160px]" />
-      </div>
-
-      {/* Top Header */}
-      <header className="relative z-10 flex shrink-0 items-center justify-between gap-2 max-w-5xl mx-auto w-full pt-1">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-red-600 flex items-center justify-center text-white font-black text-xs shadow-lg">
-            F1
-          </div>
-          <div>
-            <div className="text-[10px] sm:text-xs font-black tracking-widest text-slate-400 uppercase">
-              GRAND PRIX OF A LIFETIME
-            </div>
-            <div className="text-sm font-bold text-white tracking-tight">
-              Formula 1 Gender Reveal GP
-            </div>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            onClick={onToggleMute}
-            className="p-2 sm:px-3 sm:py-1.5 rounded-lg bg-slate-900/80 border border-slate-700/60 hover:bg-slate-800 text-slate-300 hover:text-white transition-colors flex items-center gap-1.5 text-xs font-medium cursor-pointer"
-            aria-label={isMuted ? "Unmute sound" : "Mute sound"}
-          >
-            {isMuted ? <VolumeX className="w-4 h-4 text-rose-400" /> : <Volume2 className="w-4 h-4 text-emerald-400" />}
-            <span className="hidden sm:inline">{isMuted ? "Unmute" : "Sound On"}</span>
-          </button>
-
-          <button
-            onClick={onOpenOrganizer}
-            className="p-2 sm:px-3 sm:py-1.5 rounded-lg bg-slate-900/80 border border-slate-700/60 hover:bg-slate-800 text-slate-300 hover:text-white transition-colors flex items-center gap-1.5 text-xs font-medium cursor-pointer"
-            title="Organizer Settings & Link Generator"
-          >
-            <Settings className="w-4 h-4 text-amber-400" />
-            <span className="hidden sm:inline">Organizer Setup</span>
-          </button>
-        </div>
-      </header>
-
-      {/* Main Hero Showcase */}
-      <main className="relative z-10 max-w-4xl mx-auto w-full flex-1 min-h-0 flex flex-col items-center justify-center text-center py-2 sm:py-3">
-        {/* Recipient Dedication Tag */}
-        <div className="flex items-center gap-2 max-w-full px-3 py-1 rounded-full bg-slate-900/90 border border-slate-700/80 mb-3 sm:mb-4 shadow-md">
-          <Heart className="w-3.5 h-3.5 text-red-500 fill-red-500" />
-          <span className="text-[11px] sm:text-sm font-semibold text-slate-200">
-            Dedicated with love to <strong className="text-white font-bold">{config.parentsNames || "Mom & Dad"}</strong>
-          </span>
-        </div>
-
-        {/* Hero Headline */}
-        <h1 className="font-display text-3xl min-[390px]:text-4xl sm:text-5xl md:text-7xl font-black tracking-tight text-white max-w-3xl leading-[1.02] sm:leading-[1.08] text-balance mb-2 sm:mb-3">
-          Gender Reveal <br />
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-white to-pink-400 drop-shadow-[0_4px_25px_rgba(255,255,255,0.2)]">
-            Team Boy vs Team Girl
-          </span>
-        </h1>
-
-        <p className="text-xs sm:text-sm md:text-lg text-slate-300 max-w-xl text-balance mb-3 sm:mb-5">
-          The 5 red lights are ready to go out! Watch the 30-second Formula 1 Grand Prix to discover who takes the checkered flag and joins our family!
-        </p>
-
-        {/* 3D Formula 1 Teams Cards Grid */}
-        <div className="grid grid-cols-2 gap-3 sm:gap-6 w-full max-w-xl mb-4 sm:mb-6 perspective-1000">
-          {/* Team Boy Racing 3D Card */}
-          <div className="group relative p-3 sm:p-5 rounded-2xl sm:rounded-3xl bg-gradient-to-br from-blue-900/90 via-slate-900/95 to-blue-950/90 border-2 border-blue-400/80 shadow-[0_20px_45px_rgba(2,132,199,0.35),_inset_0_2px_4px_rgba(255,255,255,0.3)] hover:-translate-y-2.5 hover:shadow-[0_30px_65px_rgba(2,132,199,0.55)] transition-all duration-300 flex flex-col items-center overflow-hidden">
-            {/* 3D Glass Light Glare */}
-            <div className="absolute -top-12 -left-12 w-32 h-32 bg-blue-400/20 rounded-full blur-xl group-hover:scale-150 transition-transform" />
-
-            <div className="relative w-12 h-12 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl bg-gradient-to-b from-blue-500/40 to-blue-600/10 border-2 border-blue-300/80 flex items-center justify-center text-2xl sm:text-3xl shadow-[0_10px_25px_rgba(59,130,246,0.4)] mb-2 group-hover:scale-110 group-hover:-rotate-3 transition-transform">
-              🏎️
-              <span className="absolute -bottom-1 -right-1 text-xs">💙</span>
-            </div>
-
-            <div className="text-sm sm:text-base font-black text-white tracking-tight drop-shadow-md">
-              TEAM BOY RACING
-            </div>
-
-          </div>
-
-          {/* Team Girl Racing 3D Card */}
-          <div className="group relative p-5 sm:p-6 rounded-3xl bg-gradient-to-br from-pink-900/90 via-slate-900/95 to-pink-950/90 border-2 border-pink-400/80 shadow-[0_20px_45px_rgba(236,72,153,0.35),_inset_0_2px_4px_rgba(255,255,255,0.3)] hover:-translate-y-2.5 hover:shadow-[0_30px_65px_rgba(236,72,153,0.55)] transition-all duration-300 flex flex-col items-center overflow-hidden">
-            {/* 3D Glass Light Glare */}
-            <div className="absolute -top-12 -left-12 w-32 h-32 bg-pink-400/20 rounded-full blur-xl group-hover:scale-150 transition-transform" />
-
-            <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-b from-pink-500/40 to-pink-600/10 border-2 border-pink-300/80 flex items-center justify-center text-3xl sm:text-4xl shadow-[0_10px_25px_rgba(236,72,153,0.4)] mb-3 group-hover:scale-110 group-hover:rotate-3 transition-transform">
-              🏎️
-              <span className="absolute -bottom-1 -right-1 text-xs">💖</span>
-            </div>
-
-            <div className="text-sm sm:text-base font-black text-white tracking-tight drop-shadow-md">
-              TEAM GIRL RACING
-            </div>
-
-          </div>
-        </div>
-
-        {/* Big Play / Start Race Button */}
-        <div className="flex flex-col items-center gap-2">
-          <button
-            onClick={onStartPlay}
-            className="group relative px-5 sm:px-10 py-3 sm:py-4 rounded-2xl sm:rounded-3xl bg-gradient-to-r from-red-600 via-rose-600 to-amber-500 text-white font-black text-base sm:text-xl shadow-[0_0_50px_rgba(225,29,72,0.5)] hover:shadow-[0_0_80px_rgba(225,29,72,0.8)] hover:scale-105 active:scale-95 transition-all duration-300 flex items-center gap-4 cursor-pointer"
-          >
-            <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-full bg-white text-slate-900 flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
-              <Play className="w-5 h-5 sm:w-6 sm:h-6 fill-slate-900 ml-1 text-slate-900" />
-            </div>
-            <div className="text-left">
-              <div className="leading-tight">START THE RACE</div>
-              <div className="text-[9px] sm:text-[11px] font-semibold text-white/90 uppercase tracking-wider">
-                5 Red Lights &amp; 30-Second GP
-              </div>
-            </div>
-          </button>
-        </div>
-      </main>
-
-      {/* Footer */}
-      <footer className="relative z-10 shrink-0 max-w-5xl mx-auto w-full pt-1 pb-0 text-center text-[10px] sm:text-xs text-slate-500">
-        <span>Made with love by Fahad</span>
-      </footer>
-    </div>
-  );
-};
+import { ArrowUpRight, Volume2, VolumeX, Settings, Flag, Heart, Play, Trophy } from 'lucide-react';
+interface IntroScreenProps { config: GenderRevealConfig; isMuted: boolean; onToggleMute: () => void; onStartPlay: () => void; onOpenOrganizer: () => void; }
+export const IntroScreen: React.FC<IntroScreenProps> = ({config,isMuted,onToggleMute,onStartPlay,onOpenOrganizer}) => (
+<div className="intro-v2 relative min-h-[100dvh] w-full overflow-hidden text-white">
+  <div className="intro-v2__grid"/><div className="intro-v2__glow intro-v2__glow--blue"/><div className="intro-v2__glow intro-v2__glow--pink"/>
+  <header className="relative z-10 mx-auto flex w-full max-w-7xl items-center justify-between px-4 py-5 sm:px-8 lg:px-12">
+    <div className="flex items-center gap-3"><div className="grid h-10 w-10 place-items-center rounded-xl bg-red-600 text-sm font-black">GP</div><div><div className="text-[10px] font-black uppercase tracking-[.28em] text-slate-400">The family grand prix</div><div className="text-sm font-extrabold">THE REVEAL RACE</div></div></div>
+    <div className="flex items-center gap-2"><button onClick={onToggleMute} aria-label="Toggle sound" className="intro-icon-button">{isMuted?<VolumeX size={17}/>:<Volume2 size={17}/>}</button><button onClick={onOpenOrganizer} className="intro-settings-button"><Settings size={16}/><span>Race setup</span></button></div>
+  </header>
+  <main className="relative z-10 mx-auto grid w-full max-w-7xl items-center gap-10 px-4 pb-10 pt-6 sm:px-8 lg:min-h-[calc(100dvh-90px)] lg:grid-cols-2 lg:gap-14 lg:px-12">
+    <section className="max-w-2xl">
+      <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[.045] px-3 py-2 text-[10px] font-bold uppercase tracking-[.22em] text-slate-300"><i className="h-2 w-2 rounded-full bg-red-500"/> A once-in-a-lifetime finish line</div>
+      <h1 className="font-display text-[clamp(3rem,8vw,6.8rem)] font-black leading-[.91] tracking-[-.065em]">TWO TEAMS.<br/><span className="intro-title-gradient">ONE BIG</span><br/>REVEAL.</h1>
+      <p className="mt-6 max-w-xl text-sm leading-7 text-slate-300 sm:text-base sm:leading-8">The engines are warming up. Team Boy and Team Girl are heading to the grid. Watch the lights, feel the race, and find out who takes P1.</p>
+      <div className="mt-7 flex flex-wrap items-center gap-3 text-xs text-slate-400"><span className="inline-flex items-center gap-2"><Flag size={14} className="text-red-400"/> 5-light start</span><i className="h-1 w-1 rounded-full bg-slate-600"/><span>30-second showdown</span><i className="h-1 w-1 rounded-full bg-slate-600"/><span>Grand reveal finale</span></div>
+      <div className="mt-9 flex flex-col items-start gap-4 sm:flex-row sm:items-center"><button onClick={onStartPlay} className="intro-start-button group"><span className="intro-start-button__icon"><Play size={19} fill="currentColor"/></span><span className="text-left"><strong>START THE RACE</strong><small>Lights out in 5 seconds</small></span><ArrowUpRight className="ml-4" size={19}/></button><div className="flex items-center gap-2 text-xs text-slate-400"><Heart size={14} className="fill-rose-400 text-rose-400"/> Dedicated to <strong className="text-white">{config.parentsNames || 'Mom & Dad'}</strong></div></div>
+    </section>
+    <section className="relative mx-auto w-full max-w-xl lg:max-w-none">
+      <div className="intro-race-card"><div className="intro-race-card__top"><div><span className="eyebrow">THE STARTING GRID</span><h2>Choose your side.</h2></div><span className="intro-live"><i/> READY</span></div>
+        <div className="team-panel team-panel--boy"><div className="team-panel__meta"><span>01 / BLUE GARAGE</span><span>TEAM BOY</span></div><svg viewBox="0 0 220 88" role="img" aria-label="Blue Formula racing car" className="team-car team-car--blue"><path d="M8 42h25l18-13 42-5 24 7 30-1 20 8h42v12h-42l-20 8-31-1-25 8-40-4-18-12H8z" fill="currentColor"/><path d="M91 29l16-13h26l12 15-25 2z" fill="#dbeafe"/><path d="M5 35h38v7H5zm172-5h36v7h-36zM5 52h38v7H5zm172 4h36v7h-36z" fill="#0b1220"/><path d="M42 43h136" stroke="#e0f2fe" strokeWidth="3"/><circle cx="54" cy="64" r="12" fill="#070b13"/><circle cx="174" cy="64" r="12" fill="#070b13"/></svg><div className="team-panel__bottom"><strong>TEAM BOY RACING</strong><span>CAR 01 <b>●</b></span></div></div>
+        <div className="team-panel team-panel--girl"><div className="team-panel__meta"><span>02 / PINK GARAGE</span><span>TEAM GIRL</span></div><svg viewBox="0 0 220 88" role="img" aria-label="Pink Formula racing car" className="team-car team-car--pink"><path d="M8 42h25l18-13 42-5 24 7 30-1 20 8h42v12h-42l-20 8-31-1-25 8-40-4-18-12H8z" fill="currentColor"/><path d="M91 29l16-13h26l12 15-25 2z" fill="#fce7f3"/><path d="M5 35h38v7H5zm172-5h36v7h-36zM5 52h38v7H5zm172 4h36v7h-36z" fill="#0b1220"/><path d="M42 43h136" stroke="#fce7f3" strokeWidth="3"/><circle cx="54" cy="64" r="12" fill="#070b13"/><circle cx="174" cy="64" r="12" fill="#070b13"/></svg><div className="team-panel__bottom"><strong>TEAM GIRL RACING</strong><span>CAR 02 <b>●</b></span></div></div>
+        <div className="intro-race-card__footer"><Trophy size={15}/><span>Only one team will cross the line first.</span><span className="intro-race-card__lights"><i/><i/><i/><i/><i/></span></div>
+      </div><div className="intro-card-caption">THE REVEAL GRAND PRIX <span>·</span> SEASON 01</div>
+    </section>
+  </main>
+  <footer className="relative z-10 mx-auto flex max-w-7xl justify-between px-4 pb-5 text-[10px] font-semibold uppercase tracking-[.18em] text-slate-600 sm:px-8 lg:px-12"><span>Built for the moment that matters</span><span>Lights · Speed · Surprise</span></footer>
+</div>);

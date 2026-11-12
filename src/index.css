@@ -221,3 +221,5 @@
   .race-lane-line, .race-car-emoji { animation: none; }
   .race-car-winner, .race-car-chaser { animation-duration: 30s; }
 }
+
+@media(prefers-reduced-motion:reduce){.race-machine--winner{animation:none;transform:translateX(calc(90cqw - 100%))}.race-machine--chaser{animation:none;transform:translateX(49cqw)}}

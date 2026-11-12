@@ -37,6 +37,7 @@ export default function App() {
     const urlWinnerParam = getParam('winner') || getParam('gender') || getParam('reveal') || getParam('team');
     const urlParentsParam = getParam('parents') || getParam('to') || getParam('name');
     const urlDueParam = getParam('due') || getParam('date');
+    const urlMessageParam = getParam('message');
 
     let initialWinner: GenderWinner = 'boy';
     if (urlWinnerParam) {
@@ -57,7 +58,7 @@ export default function App() {
       winner: initialWinner,
       parentsNames: urlParentsParam || 'Mom & Dad',
       babyDueDate: urlDueParam || 'Coming Soon',
-      customMessage: '',
+      customMessage: urlMessageParam || '',
       circuitName: 'The Reveal Grand Prix Circuit',
     };
   });
@@ -101,7 +102,7 @@ export default function App() {
   };
 
   return (
-    <div className="relative min-h-screen w-full bg-slate-950 text-slate-100 flex flex-col justify-center items-center overflow-hidden">
+    <div className="relative min-h-screen w-full bg-slate-950 text-slate-100 flex flex-col justify-center items-center overflow-x-hidden">
       {/* 1. INTRO SCREEN */}
       {stage === 'INTRO' && (
         <IntroScreen

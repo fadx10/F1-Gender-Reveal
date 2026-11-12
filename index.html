@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#05070f" />
+  <title>Baby Grand Prix — Gender Reveal</title>
+  <meta name="description" content="Two cars. Fifteen seconds. One very big surprise." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%23070b16'/%3E%3Cg fill='%23ffffff'%3E%3Crect x='18' y='22' width='16' height='16'/%3E%3Crect x='50' y='22' width='16' height='16'/%3E%3Crect x='34' y='38' width='16' height='16'/%3E%3Crect x='66' y='38' width='16' height='16'/%3E%3Crect x='18' y='54' width='16' height='16'/%3E%3Crect x='50' y='54' width='16' height='16'/%3E%3Crect x='34' y='70' width='16' height='16'/%3E%3Crect x='66' y='70' width='16' height='16'/%3E%3C/g%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <canvas id="scene" aria-hidden="true"></canvas>
+  <canvas id="fx" aria-hidden="true"></canvas>
+
+  <!-- ===== Global controls ===== -->
+  <div class="global-controls">
+    <button class="icon-btn" id="soundBtn" aria-label="Toggle sound" title="Toggle sound">🔊</button>
+    <button class="icon-btn" id="gearBtn" aria-label="Parent settings" title="Parent settings">⚙</button>
+  </div>
+
+  <!-- ===== Race HUD ===== -->
+  <div class="hud hidden" id="hud">
+    <div class="hud-top">
+      <div class="brand">
+        <span class="brand-mark">F1</span>
+        <span class="brand-text">BABY GRAND PRIX<small>GENDER REVEAL</small></span>
+      </div>
+
+      <div class="timer-wrap">
+        <div class="timer" id="timer">15.0</div>
+        <div class="timer-label">TIME LEFT</div>
+      </div>
+
+      <div class="hud-spacer" aria-hidden="true"></div>
+    </div>
+
+    <div class="hud-bottom">
+      <div class="team-card blue">
+        <div class="team-name">BABY BOY</div>
+        <div class="team-speed"><span id="speedBlue">0</span><small>KPH</small></div>
+      </div>
+
+      <div class="race-progress">
+        <div class="race-bar">
+          <div class="race-fill" id="raceFill"></div>
+          <div class="race-tick blue" id="tickBlue"></div>
+          <div class="race-tick pink" id="tickPink"></div>
+        </div>
+        <div class="race-bar-labels"><span>START</span><span>FINISH</span></div>
+      </div>
+
+      <div class="team-card pink">
+        <div class="team-name">BABY GIRL</div>
+        <div class="team-speed"><span id="speedPink">0</span><small>KPH</small></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Start lights ===== -->
+  <div class="countdown hidden" id="countdown">
+    <div class="lights" id="lights"><i></i><i></i><i></i><i></i><i></i></div>
+    <div class="countdown-text" id="countdownText">GET READY</div>
+  </div>
+
+  <!-- ===== Start screen ===== -->
+  <div class="start-screen" id="startScreen">
+    <div class="start-inner">
+      <div class="checker-line" aria-hidden="true"></div>
+
+      <p class="eyebrow"><span class="live-dot"></span> THE BABY GRAND PRIX <span class="eyebrow-sep">/</span> GENDER REVEAL</p>
+
+      <h1 class="hero-title">
+        BABY<br />
+        <span class="hero-gradient">GRAND PRIX</span>
+      </h1>
+
+      <p class="tagline">Two cars. <em>Fifteen seconds.</em> One very big surprise.</p>
+
+      <button class="start-btn" id="startBtn">
+        <span class="start-btn-icon" aria-hidden="true">🏁</span>
+        <span>START THE RACE</span>
+      </button>
+
+      <div class="start-meta">
+        <span><b>1</b> LAP</span>
+        <span class="meta-dot"></span>
+        <span><b>15</b> SECONDS</span>
+        <span class="meta-dot"></span>
+        <span><b>2</b> CARS</span>
+      </div>
+
+      <p class="hint">
+        Parents — set the secret result with the
+        <button class="link" id="settingsHint" type="button">⚙ gear</button>
+        in the top corner.
+      </p>
+    </div>
+
+    <div class="start-footer">
+      <span>LIGHTS OUT AND AWAY WE GO</span>
+      <span class="footer-keys">SPACE TO START · M TO MUTE</span>
+    </div>
+  </div>
+
+  <!-- ===== Reveal screen ===== -->
+  <div class="reveal-screen hidden" id="reveal">
+    <div class="rays" aria-hidden="true"></div>
+    <div class="reveal-inner">
+      <div class="winner-tag" id="winnerTag">BABY BOY TAKES THE WIN</div>
+      <h2 class="reveal-title" id="revealTitle">IT'S A BOY!</h2>
+      <p class="reveal-sub" id="revealSub">A little racer in blue is on the way.</p>
+      <div class="reveal-actions">
+        <button class="btn primary" id="againBtn">RACE AGAIN</button>
+        <button class="btn ghost" id="homeBtn">HOME</button>
+      </div>
+      <div class="reveal-meta" id="revealMeta">FINISHED IN 15.0 SECONDS · PHOTO FINISH</div>
+    </div>
+  </div>
+
+  <!-- ===== Settings modal ===== -->
+  <div class="settings-backdrop hidden" id="settingsModal">
+    <div class="settings-card" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+      <button class="modal-close" id="closeSettings" aria-label="Close settings">✕</button>
+      <p class="eyebrow"><span class="live-dot"></span> TOP SECRET</p>
+      <h3 id="settingsTitle">Parent's Secret</h3>
+      <p class="settings-sub">Choose the result. The winning car will announce it when it crosses the finish line.</p>
+
+      <div class="options" id="genderOptions">
+        <button class="option blue" data-gender="boy" type="button">
+          <span class="option-icon">💙</span>
+          <span class="option-label">Boy</span>
+          <small>Baby Boy wins</small>
+        </button>
+        <button class="option pink" data-gender="girl" type="button">
+          <span class="option-icon">💖</span>
+          <span class="option-label">Girl</span>
+          <small>Baby Girl wins</small>
+        </button>
+        <button class="option neutral" data-gender="random" type="button">
+          <span class="option-icon">🎲</span>
+          <span class="option-label">Surprise</span>
+          <small>Random winner</small>
+        </button>
+      </div>
+
+      <p class="settings-note">Saved on this device only. Nobody sees this until the race is over.</p>
+      <button class="btn primary wide" id="saveSettings">SAVE &amp; CLOSE</button>
+    </div>
+  </div>
+
+  <div class="flash" id="flash" aria-hidden="true"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

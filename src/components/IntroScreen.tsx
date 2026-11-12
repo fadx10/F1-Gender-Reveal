@@ -85,38 +85,50 @@ export const IntroScreen: React.FC<IntroScreenProps> = ({
           The 5 red lights are ready to go out! Watch the 30-second Formula 1 Grand Prix to discover who takes the checkered flag and joins our family!
         </p>
 
-        {/* F1 Teams Grid */}
-        <div className="grid grid-cols-2 gap-3 sm:gap-6 w-full max-w-xl mb-10">
-          {/* Team Boy Racing Card */}
-          <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-b from-blue-950/70 via-slate-900/90 to-blue-950/40 border border-blue-500/40 shadow-xl flex flex-col items-center">
-            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-blue-500/20 border-2 border-blue-400/60 flex items-center justify-center text-2xl sm:text-3xl shadow-inner mb-3">
-              🏎️💙
+        {/* 3D Formula 1 Teams Cards Grid */}
+        <div className="grid grid-cols-2 gap-4 sm:gap-8 w-full max-w-xl mb-10 perspective-1000">
+          {/* Team Boy Racing 3D Card */}
+          <div className="group relative p-5 sm:p-6 rounded-3xl bg-gradient-to-br from-blue-900/90 via-slate-900/95 to-blue-950/90 border-2 border-blue-400/80 shadow-[0_20px_45px_rgba(2,132,199,0.35),_inset_0_2px_4px_rgba(255,255,255,0.3)] hover:-translate-y-2.5 hover:shadow-[0_30px_65px_rgba(2,132,199,0.55)] transition-all duration-300 flex flex-col items-center overflow-hidden">
+            {/* 3D Glass Light Glare */}
+            <div className="absolute -top-12 -left-12 w-32 h-32 bg-blue-400/20 rounded-full blur-xl group-hover:scale-150 transition-transform" />
+
+            <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-b from-blue-500/40 to-blue-600/10 border-2 border-blue-300/80 flex items-center justify-center text-3xl sm:text-4xl shadow-[0_10px_25px_rgba(59,130,246,0.4)] mb-3 group-hover:scale-110 group-hover:-rotate-3 transition-transform">
+              🏎️
+              <span className="absolute -bottom-1 -right-1 text-xs">💙</span>
             </div>
-            <div className="text-sm sm:text-base font-extrabold text-blue-300 tracking-tight">
+
+            <div className="text-sm sm:text-base font-black text-white tracking-tight drop-shadow-md">
               TEAM BOY RACING
             </div>
-            <div className="text-[11px] sm:text-xs text-blue-200/70 mt-0.5">
-              Blue Thunderbolt GP · No. 1
+            <div className="text-[11px] sm:text-xs font-semibold text-blue-200 mt-1">
+              Blue Thunderbolt GP · Car #1
             </div>
-            <div className="mt-2 text-[10px] sm:text-xs text-slate-400 flex items-center gap-1">
-              <Zap className="w-3 h-3 text-amber-400" />
+
+            <div className="mt-3 px-3 py-1 rounded-full bg-blue-950/80 border border-blue-400/50 text-[10px] sm:text-xs text-blue-200 font-bold flex items-center gap-1.5 shadow-inner">
+              <Zap className="w-3 h-3 text-amber-400 fill-amber-400" />
               <span>1050 HP Turbo-Hybrid</span>
             </div>
           </div>
 
-          {/* Team Girl Racing Card */}
-          <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-b from-pink-950/70 via-slate-900/90 to-pink-950/40 border border-pink-500/40 shadow-xl flex flex-col items-center">
-            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-pink-500/20 border-2 border-pink-400/60 flex items-center justify-center text-2xl sm:text-3xl shadow-inner mb-3">
-              🏎️💖
+          {/* Team Girl Racing 3D Card */}
+          <div className="group relative p-5 sm:p-6 rounded-3xl bg-gradient-to-br from-pink-900/90 via-slate-900/95 to-pink-950/90 border-2 border-pink-400/80 shadow-[0_20px_45px_rgba(236,72,153,0.35),_inset_0_2px_4px_rgba(255,255,255,0.3)] hover:-translate-y-2.5 hover:shadow-[0_30px_65px_rgba(236,72,153,0.55)] transition-all duration-300 flex flex-col items-center overflow-hidden">
+            {/* 3D Glass Light Glare */}
+            <div className="absolute -top-12 -left-12 w-32 h-32 bg-pink-400/20 rounded-full blur-xl group-hover:scale-150 transition-transform" />
+
+            <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-b from-pink-500/40 to-pink-600/10 border-2 border-pink-300/80 flex items-center justify-center text-3xl sm:text-4xl shadow-[0_10px_25px_rgba(236,72,153,0.4)] mb-3 group-hover:scale-110 group-hover:rotate-3 transition-transform">
+              🏎️
+              <span className="absolute -bottom-1 -right-1 text-xs">💖</span>
             </div>
-            <div className="text-sm sm:text-base font-extrabold text-pink-300 tracking-tight">
+
+            <div className="text-sm sm:text-base font-black text-white tracking-tight drop-shadow-md">
               TEAM GIRL RACING
             </div>
-            <div className="text-[11px] sm:text-xs text-pink-200/70 mt-0.5">
-              Pink Velocity GP · No. 1
+            <div className="text-[11px] sm:text-xs font-semibold text-pink-200 mt-1">
+              Pink Velocity GP · Car #1
             </div>
-            <div className="mt-2 text-[10px] sm:text-xs text-slate-400 flex items-center gap-1">
-              <Zap className="w-3 h-3 text-amber-400" />
+
+            <div className="mt-3 px-3 py-1 rounded-full bg-pink-950/80 border border-pink-400/50 text-[10px] sm:text-xs text-pink-200 font-bold flex items-center gap-1.5 shadow-inner">
+              <Zap className="w-3 h-3 text-amber-400 fill-amber-400" />
               <span>1050 HP Turbo-Hybrid</span>
             </div>
           </div>

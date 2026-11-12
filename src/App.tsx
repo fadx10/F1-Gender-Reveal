@@ -27,10 +27,16 @@ export default function App() {
 
   // Config setup
   const [config, setConfig] = useState<GenderRevealConfig>(() => {
-    const params = new URLSearchParams(window.location.search);
-    const urlWinnerParam = params.get('winner') || params.get('gender') || params.get('reveal') || params.get('team');
-    const urlParentsParam = params.get('parents') || params.get('to') || params.get('name');
-    const urlDueParam = params.get('due') || params.get('date');
+    const searchParams = new URLSearchParams(window.location.search);
+    let hashParams = new URLSearchParams();
+    if (window.location.hash.includes('?')) {
+      hashParams = new URLSearchParams(window.location.hash.slice(window.location.hash.indexOf('?') + 1));
+    }
+    const getParam = (key: string) => searchParams.get(key) || hashParams.get(key);
+
+    const urlWinnerParam = getParam('winner') || getParam('gender') || getParam('reveal') || getParam('team');
+    const urlParentsParam = getParam('parents') || getParam('to') || getParam('name');
+    const urlDueParam = getParam('due') || getParam('date');
 
     let initialWinner: GenderWinner = 'boy';
     if (urlWinnerParam) {

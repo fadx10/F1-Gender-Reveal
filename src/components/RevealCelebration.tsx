@@ -177,8 +177,8 @@ export const RevealCelebration: React.FC<RevealCelebrationProps> = ({
 
     // Main animation loop
     const render = () => {
-      // Clear with slight alpha trail effect for smooth motion blur
-      ctx.fillStyle = 'rgba(7, 11, 20, 0.22)';
+      // Clear with themed alpha trail effect for smooth fireworks motion blur
+      ctx.fillStyle = isBoy ? 'rgba(10, 25, 47, 0.25)' : 'rgba(34, 9, 28, 0.25)';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       emitPodiumFountains();
@@ -322,7 +322,13 @@ export const RevealCelebration: React.FC<RevealCelebrationProps> = ({
   };
 
   return (
-    <div className="relative min-h-screen w-full flex flex-col items-center justify-between bg-gradient-to-b from-slate-950 via-[#070b14] to-slate-950 text-white overflow-x-hidden p-4 sm:p-8 select-none">
+    <div
+      className={`relative min-h-screen w-full flex flex-col items-center justify-between text-white overflow-x-hidden p-4 sm:p-8 select-none transition-colors duration-700 ${
+        isBoy
+          ? 'bg-gradient-to-b from-blue-950 via-[#061838] to-slate-950'
+          : 'bg-gradient-to-b from-pink-950 via-[#2e0824] to-slate-950'
+      }`}
+    >
       {/* Background Fireworks & Stage Pyro Canvas */}
       <canvas
         ref={canvasRef}
@@ -332,8 +338,8 @@ export const RevealCelebration: React.FC<RevealCelebrationProps> = ({
       {/* Atmospheric Theme Glow */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div
-          className={`absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[500px] rounded-full blur-[160px] opacity-40 ${
-            isBoy ? 'bg-blue-500' : 'bg-pink-500'
+          className={`absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[600px] rounded-full blur-[160px] opacity-60 ${
+            isBoy ? 'bg-blue-600' : 'bg-pink-600'
           }`}
         />
       </div>
@@ -357,10 +363,10 @@ export const RevealCelebration: React.FC<RevealCelebrationProps> = ({
       </div>
 
       {/* Main Big Announcement Card */}
-      <main className="relative z-20 max-w-2xl w-full my-auto py-6 flex flex-col items-center text-center">
+      <main className="relative z-20 max-w-3xl w-full my-auto py-6 flex flex-col items-center text-center">
         {/* Golden Trophy Icon */}
         <div className="relative mb-4">
-          <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-b from-amber-300 to-amber-600 flex items-center justify-center shadow-[0_0_50px_rgba(245,158,11,0.5)] animate-float">
+          <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-b from-amber-300 to-amber-600 flex items-center justify-center shadow-[0_0_50px_rgba(245,158,11,0.6)] animate-float">
             <Trophy className="w-10 h-10 sm:w-12 sm:h-12 text-slate-950" />
           </div>
           <div className="absolute -bottom-2 -right-2 px-2.5 py-0.5 rounded-full bg-slate-950 border border-amber-400/80 text-[10px] font-black tracking-wider text-amber-300 uppercase">
@@ -368,29 +374,31 @@ export const RevealCelebration: React.FC<RevealCelebrationProps> = ({
           </div>
         </div>
 
-        {/* Big Reveal Heading */}
-        <div className="space-y-2 mb-6">
-          <div className="text-xs sm:text-sm font-bold uppercase tracking-widest text-slate-300">
-            {isBoy ? "💙 TEAM BOY TAKES P1 ON THE PODIUM 💙" : "💖 TEAM GIRL TAKES P1 ON THE PODIUM 💖"}
+        {/* PROMINENT GENDER REVEAL BANNER (Vibrant Blue for Boy / Vibrant Pink for Girl) */}
+        <div
+          className={`w-full rounded-3xl p-6 sm:p-10 shadow-[0_20px_80px_rgba(0,0,0,0.7)] border-4 mb-6 transition-all duration-500 relative overflow-hidden animate-pulse-glow ${
+            isBoy
+              ? 'bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-900 border-blue-300/90 text-white shadow-blue-500/60'
+              : 'bg-gradient-to-br from-pink-600 via-rose-600 to-fuchsia-900 border-pink-300/90 text-white shadow-pink-500/60'
+          }`}
+        >
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-black/30 backdrop-blur-md border border-white/30 text-xs sm:text-sm font-black tracking-widest text-white uppercase mb-3">
+            <span>🏁</span>
+            <span>{isBoy ? "P1 CHAMPION: TEAM BOY RACING" : "P1 CHAMPION: TEAM GIRL RACING"}</span>
+            <span>🏁</span>
           </div>
 
-          <h1
-            className={`font-display text-5xl sm:text-7xl md:text-8xl font-black tracking-tight drop-shadow-[0_10px_35px_rgba(0,0,0,0.8)] ${
-              isBoy
-                ? 'text-transparent bg-clip-text bg-gradient-to-r from-blue-300 via-sky-100 to-blue-400'
-                : 'text-transparent bg-clip-text bg-gradient-to-r from-pink-300 via-rose-100 to-pink-400'
-            }`}
-          >
+          <h1 className="font-display text-6xl sm:text-8xl md:text-9xl font-black tracking-tight text-white drop-shadow-[0_8px_30px_rgba(0,0,0,0.6)] leading-none my-3">
             {isBoy ? "IT'S A BOY!" : "IT'S A GIRL!"}
           </h1>
 
-          <p className="text-base sm:text-xl text-slate-200 font-semibold tracking-wide">
-            {isBoy ? "A little champion baby boy is joining the team! 👶🏎️💨" : "A little champion baby girl is joining the team! 👶🏎️🎀"}
+          <p className="text-xl sm:text-3xl font-extrabold text-white/95 drop-shadow-md tracking-wide mt-3">
+            {isBoy ? "💙 A Handsome Baby Boy is Joining the Family! 💙" : "💖 A Precious Baby Girl is Joining the Family! 💖"}
           </p>
         </div>
 
-        {/* Grandparents & Family Heartfelt Letter Card */}
-        <div className="w-full bg-slate-900/90 backdrop-blur-xl rounded-3xl p-6 sm:p-8 border border-slate-700/80 shadow-2xl mb-8 text-left">
+        {/* Grandparents & Family Heartfelt Letter Card (3D Embossed) */}
+        <div className="w-full bg-slate-900/95 backdrop-blur-xl rounded-3xl p-6 sm:p-8 border-2 border-slate-700/90 shadow-[0_25px_60px_rgba(0,0,0,0.8),_inset_0_2px_4px_rgba(255,255,255,0.15)] mb-8 text-left transition-transform duration-300 hover:-translate-y-1">
           <div className="flex items-center gap-2 mb-3">
             <Heart className={`w-4 h-4 ${isBoy ? 'text-blue-400 fill-blue-400' : 'text-pink-400 fill-pink-400'}`} />
             <h2 className="text-sm font-bold uppercase tracking-wider text-slate-300">

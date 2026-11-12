@@ -93,14 +93,14 @@ export const OrganizerModal: React.FC<OrganizerModalProps> = ({
               <button
                 type="button"
                 onClick={() => setWinner('boy')}
-                className={`p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-1 cursor-pointer ${
+                className={`p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-1.5 cursor-pointer transform hover:-translate-y-1 ${
                   winner === 'boy'
-                    ? 'bg-blue-950/80 border-blue-400 text-white shadow-[0_0_20px_rgba(59,130,246,0.3)]'
-                    : 'bg-slate-800/60 border-slate-700 text-slate-400 hover:border-slate-600'
+                    ? 'bg-gradient-to-b from-blue-900 to-blue-950 border-blue-400 text-white shadow-[0_12px_30px_rgba(59,130,246,0.4),_inset_0_2px_4px_rgba(255,255,255,0.25)] scale-[1.02]'
+                    : 'bg-slate-800/80 border-slate-700 text-slate-400 hover:border-slate-600 shadow-md'
                 }`}
               >
-                <div className="text-3xl">🏎️💙</div>
-                <div className="text-sm font-extrabold tracking-wide text-blue-300">
+                <div className="text-3xl filter drop-shadow">🏎️💙</div>
+                <div className="text-sm font-black tracking-wide text-blue-300">
                   TEAM BOY WINS
                 </div>
                 <div className="text-[11px] text-slate-400">Takes P1 at checkered flag</div>
@@ -109,14 +109,14 @@ export const OrganizerModal: React.FC<OrganizerModalProps> = ({
               <button
                 type="button"
                 onClick={() => setWinner('girl')}
-                className={`p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-1 cursor-pointer ${
+                className={`p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-1.5 cursor-pointer transform hover:-translate-y-1 ${
                   winner === 'girl'
-                    ? 'bg-pink-950/80 border-pink-400 text-white shadow-[0_0_20px_rgba(236,72,153,0.3)]'
-                    : 'bg-slate-800/60 border-slate-700 text-slate-400 hover:border-slate-600'
+                    ? 'bg-gradient-to-b from-pink-900 to-pink-950 border-pink-400 text-white shadow-[0_12px_30px_rgba(236,72,153,0.4),_inset_0_2px_4px_rgba(255,255,255,0.25)] scale-[1.02]'
+                    : 'bg-slate-800/80 border-slate-700 text-slate-400 hover:border-slate-600 shadow-md'
                 }`}
               >
-                <div className="text-3xl">🏎️💖</div>
-                <div className="text-sm font-extrabold tracking-wide text-pink-300">
+                <div className="text-3xl filter drop-shadow">🏎️💖</div>
+                <div className="text-sm font-black tracking-wide text-pink-300">
                   TEAM GIRL WINS
                 </div>
                 <div className="text-[11px] text-slate-400">Takes P1 at checkered flag</div>

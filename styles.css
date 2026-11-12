@@ -663,6 +663,41 @@ canvas#fx {
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
+.reveal-emojis {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(6px, 1.6vw, 18px);
+  margin-bottom: 20px;
+  font-size: clamp(30px, 5.5vw, 58px);
+  line-height: 1;
+  filter: drop-shadow(0 12px 30px rgba(0, 0, 0, 0.45));
+}
+
+.reveal-emojis span {
+  display: inline-block;
+  animation:
+    emojiPop 0.7s cubic-bezier(0.18, 1.5, 0.4, 1) both,
+    emojiFloat 3.2s ease-in-out infinite;
+}
+
+.reveal-emojis span:nth-child(1) { animation-delay: 0.05s, 0.95s; }
+.reveal-emojis span:nth-child(2) { animation-delay: 0.13s, 1.1s; }
+.reveal-emojis span:nth-child(3) { animation-delay: 0.21s, 1.25s; }
+.reveal-emojis span:nth-child(4) { animation-delay: 0.29s, 1.4s; }
+.reveal-emojis span:nth-child(5) { animation-delay: 0.37s, 1.55s; }
+
+@keyframes emojiPop {
+  0% { opacity: 0; transform: scale(0.2) rotate(-24deg); }
+  70% { opacity: 1; transform: scale(1.14) rotate(5deg); }
+  100% { opacity: 1; transform: scale(1) rotate(0deg); }
+}
+
+@keyframes emojiFloat {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 -8px; }
+}
+
 .winner-tag {
   display: inline-flex;
   align-items: center;
@@ -793,6 +828,8 @@ canvas#fx {
 .settings-card {
   position: relative;
   width: min(540px, 100%);
+  max-height: min(92vh, 840px);
+  overflow-y: auto;
   padding: 34px;
   border-radius: 20px;
   border: 1px solid rgba(150, 190, 255, 0.18);
@@ -916,6 +953,153 @@ canvas#fx {
   color: #060a13;
 }
 
+/* Share-a-surprise link builder */
+.share-box {
+  margin-top: 22px;
+  padding: 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(150, 190, 255, 0.16);
+  background: linear-gradient(145deg, rgba(63, 184, 255, 0.07), rgba(255, 95, 168, 0.055));
+}
+
+.share-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.share-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #e6efff;
+}
+
+.share-badge {
+  padding: 3px 8px;
+  border-radius: 99px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: #9fb4d4;
+  white-space: nowrap;
+}
+
+.share-copy {
+  margin: 8px 0 12px;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: #8ea3c2;
+}
+
+.share-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.share-btn {
+  padding: 11px 10px;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+}
+
+.share-btn.blue {
+  border-color: rgba(63, 184, 255, 0.45);
+  background: rgba(63, 184, 255, 0.08);
+  color: #c3ebff;
+}
+
+.share-btn.pink {
+  border-color: rgba(255, 95, 168, 0.45);
+  background: rgba(255, 95, 168, 0.08);
+  color: #ffd0e5;
+}
+
+.share-btn.blue:hover {
+  background: rgba(63, 184, 255, 0.16);
+  border-color: rgba(63, 184, 255, 0.75);
+}
+
+.share-btn.pink:hover {
+  background: rgba(255, 95, 168, 0.16);
+  border-color: rgba(255, 95, 168, 0.75);
+}
+
+.share-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.share-url {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(150, 190, 255, 0.18);
+  background: rgba(2, 6, 14, 0.55);
+  color: #c9d9f1;
+  font-family: var(--font-body);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  text-overflow: ellipsis;
+}
+
+.share-url:focus {
+  outline: none;
+  border-color: rgba(63, 184, 255, 0.6);
+  box-shadow: 0 0 0 2px rgba(63, 184, 255, 0.16);
+}
+
+.share-url::placeholder { color: rgba(140, 160, 188, 0.55); }
+
+.share-copy-btn {
+  padding: 10px 14px;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  flex: 0 0 auto;
+}
+
+.share-copy-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+  transform: none;
+}
+
+.share-status {
+  min-height: 16px;
+  margin: 8px 0 0;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: #8fd8a8;
+}
+
+/* Shared-link arrival banner */
+.surprise-banner {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 20px 0 -14px;
+  padding: 10px 18px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: linear-gradient(100deg, rgba(63, 184, 255, 0.14), rgba(255, 95, 168, 0.16));
+  color: #e8f3ff;
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.32);
+}
+
+.surprise-banner.hidden { display: none; }
+
 /* ============================================================
    Flash
    ============================================================ */
@@ -985,5 +1169,5 @@ canvas#fx {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .checker-line, .start-btn::after, .rays, .live-dot, .timer.is-urgent { animation: none !important; }
+  .checker-line, .start-btn::after, .rays, .live-dot, .timer.is-urgent, .reveal-emojis span { animation: none !important; }
 }

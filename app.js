@@ -25,6 +25,60 @@
   };
   const rand = (a, b) => a + Math.random() * (b - a);
 
+  // Share tokens: an opaque 12-character code with an embedded checksum.
+  // The last character encodes boy/girl relative to the rest, so the link
+  // looks random but can still reveal the pre-picked winner without a server.
+  const SHARE_ALPHABET = 'abcdefghjkmnpqrstuvwxyz23456789';
+  const SHARE_LENGTH = 12;
+
+  function shareHash(text) {
+    let h = 2166136261 >>> 0;
+    for (let i = 0; i < text.length; i++) {
+      h ^= text.charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    return h >>> 0;
+  }
+
+  function randomShareChar() {
+    if (window.crypto && window.crypto.getRandomValues) {
+      const buf = new Uint32Array(1);
+      window.crypto.getRandomValues(buf);
+      return SHARE_ALPHABET[buf[0] % SHARE_ALPHABET.length];
+    }
+    return SHARE_ALPHABET[Math.floor(Math.random() * SHARE_ALPHABET.length)];
+  }
+
+  function makeShareToken(gender) {
+    const n = SHARE_ALPHABET.length;
+    let prefix = '';
+    for (let i = 0; i < SHARE_LENGTH - 1; i++) prefix += randomShareChar();
+    const index = (shareHash(prefix) + (gender === 'girl' ? 13 : 0)) % n;
+    return prefix + SHARE_ALPHABET[index];
+  }
+
+  function readShareToken(token) {
+    if (!token || token.length !== SHARE_LENGTH) return null;
+    const clean = token.toLowerCase();
+    for (let i = 0; i < clean.length; i++) {
+      if (SHARE_ALPHABET.indexOf(clean[i]) === -1) return null;
+    }
+    const prefix = clean.slice(0, -1);
+    const marker = clean.slice(-1);
+    const n = SHARE_ALPHABET.length;
+    const base = shareHash(prefix) % n;
+    if (marker === SHARE_ALPHABET[base]) return 'boy';
+    if (marker === SHARE_ALPHABET[(base + 13) % n]) return 'girl';
+    return null;
+  }
+
+  let sharedGender = null;
+  try {
+    const match = location.hash.match(/^#r=([a-z0-9]+)$/i)
+      || location.search.match(/[?&]r=([a-z0-9]+)/i);
+    if (match) sharedGender = readShareToken(match[1]);
+  } catch (err) { /* ignore malformed URLs */ }
+
   const TEAM = {
     blue: { main: '#3fb8ff', light: '#c6efff', dark: '#0b5cb0', rgb: '63,184,255' },
     pink: { main: '#ff5fa8', light: '#ffd3e7', dark: '#b61561', rgb: '255,95,168' },
@@ -70,6 +124,7 @@
     revealTitle: $('#revealTitle'),
     revealSub: $('#revealSub'),
     revealMeta: $('#revealMeta'),
+    revealEmojis: $('#revealEmojis'),
     winnerTag: $('#winnerTag'),
     gearBtn: $('#gearBtn'),
     soundBtn: $('#soundBtn'),
@@ -77,6 +132,12 @@
     settingsPanel: $('#genderOptions'),
     saveSettings: $('#saveSettings'),
     closeSettings: $('#closeSettings'),
+    shareBoy: $('#shareBoy'),
+    shareGirl: $('#shareGirl'),
+    shareUrl: $('#shareUrl'),
+    copyShare: $('#copyShare'),
+    shareStatus: $('#shareStatus'),
+    surpriseBanner: $('#surpriseBanner'),
     flash: $('#flash'),
   };
 
@@ -1431,6 +1492,7 @@ function openSettings() {
   Sound.click();
   tempGender = settings.gender;
   syncOptions();
+  els.shareStatus.textContent = '';
   els.settingsModal.classList.remove('hidden');
 }
 
@@ -1448,6 +1510,44 @@ function saveSettings() {
   closeSettings(true);
 }
 
+/* ------------------------------------------------------------
+   Shareable surprise links
+   ------------------------------------------------------------ */
+function shareBaseUrl() {
+  return location.href.split('#')[0];
+}
+
+async function copyShareLink() {
+  const value = els.shareUrl.value.trim();
+  if (!value) return;
+
+  let copied = false;
+  try {
+    await navigator.clipboard.writeText(value);
+    copied = true;
+  } catch (err) {
+    try {
+      els.shareUrl.focus();
+      els.shareUrl.select();
+      copied = document.execCommand('copy');
+    } catch (e) {
+      copied = false;
+    }
+  }
+
+  els.shareStatus.textContent = copied
+    ? 'Copied! Send it to your guest — the link is the surprise.'
+    : 'Link ready. Select it above and copy manually.';
+  if (copied) Sound.confirm(); else Sound.click();
+}
+
+function buildShareLink(gender) {
+  els.shareUrl.value = `${shareBaseUrl()}#r=${makeShareToken(gender)}`;
+  els.copyShare.disabled = false;
+  els.shareStatus.textContent = '';
+  copyShareLink();
+}
+
 function flashScreen() {
   els.flash.classList.remove('fire');
   void els.flash.offsetWidth;
@@ -1458,6 +1558,8 @@ function flashScreen() {
    Race flow
    ------------------------------------------------------------ */
 function pickWinner() {
+  if (sharedGender === 'boy') return 'blue';
+  if (sharedGender === 'girl') return 'pink';
   if (settings.gender === 'boy') return 'blue';
   if (settings.gender === 'girl') return 'pink';
   return Math.random() < 0.5 ? 'blue' : 'pink';
@@ -1563,6 +1665,12 @@ function showReveal() {
   els.revealSub.textContent = isBoy
     ? 'A little racer in blue is on the way.'
     : 'A little racer in pink is on the way.';
+  if (els.revealEmojis) {
+    const emojis = isBoy
+      ? ['👶', '💙', '🍼', '🎈', '🎉']
+      : ['👶', '💖', '🎀', '🎈', '🎉'];
+    els.revealEmojis.innerHTML = emojis.map((e) => `<span>${e}</span>`).join('');
+  }
   if (els.revealMeta) {
     els.revealMeta.textContent = `FINISHED IN ${RACE_DURATION.toFixed(1)} SECONDS · PHOTO FINISH`;
   }
@@ -1806,6 +1914,11 @@ els.settingsModal.addEventListener('click', (e) => {
 
 els.soundBtn.addEventListener('click', toggleSound);
 
+els.shareBoy.addEventListener('click', () => buildShareLink('boy'));
+els.shareGirl.addEventListener('click', () => buildShareLink('girl'));
+els.copyShare.addEventListener('click', copyShareLink);
+els.shareUrl.addEventListener('focus', () => els.shareUrl.select());
+
 // Unlock audio on the first interaction so UI sounds work before the race.
 window.addEventListener('pointerdown', () => Sound.init(), { once: true });
 
@@ -1849,6 +1962,16 @@ refreshSoundIcon();
 syncOptions();
 updateControls();
 updateHUD();
+
+// A shared link carries the pre-picked result and hides the parent controls.
+if (sharedGender) {
+  els.surpriseBanner.classList.remove('hidden');
+  els.gearBtn.style.display = 'none';
+  const hint = els.startHint && els.startHint.closest('.hint');
+  if (hint) hint.style.display = 'none';
+  document.title = 'A Surprise Awaits — Baby Grand Prix';
+}
+
 requestAnimationFrame(loop);
 
 })();

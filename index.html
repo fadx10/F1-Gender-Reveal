@@ -80,6 +80,8 @@
 
       <p class="tagline">Two cars. <em>Fifteen seconds.</em> One very big surprise.</p>
 
+      <p class="surprise-banner hidden" id="surpriseBanner">🎁 A secret race is waiting — press start when you're ready.</p>
+
       <button class="start-btn" id="startBtn">
         <span class="start-btn-icon" aria-hidden="true">🏁</span>
         <span>START THE RACE</span>
@@ -110,6 +112,7 @@
   <div class="reveal-screen hidden" id="reveal">
     <div class="rays" aria-hidden="true"></div>
     <div class="reveal-inner">
+      <div class="reveal-emojis" id="revealEmojis" aria-hidden="true"></div>
       <div class="winner-tag" id="winnerTag">BABY BOY TAKES THE WIN</div>
       <h2 class="reveal-title" id="revealTitle">IT'S A BOY!</h2>
       <p class="reveal-sub" id="revealSub">A little racer in blue is on the way.</p>
@@ -145,6 +148,23 @@
           <span class="option-label">Surprise</span>
           <small>Random winner</small>
         </button>
+      </div>
+
+      <div class="share-box">
+        <div class="share-heading">
+          <p class="share-title">Send it as a surprise</p>
+          <span class="share-badge">UNIQUE LINK</span>
+        </div>
+        <p class="share-copy">Create a private link for one gender. Your guest opens it and the race reveals the secret at the finish line.</p>
+        <div class="share-actions">
+          <button class="btn share-btn blue" id="shareBoy" type="button">💙 Copy Boy link</button>
+          <button class="btn share-btn pink" id="shareGirl" type="button">💖 Copy Girl link</button>
+        </div>
+        <div class="share-row">
+          <input class="share-url" id="shareUrl" type="text" readonly placeholder="Your secret link appears here" aria-label="Your secret race link" />
+          <button class="btn ghost share-copy-btn" id="copyShare" type="button" disabled>COPY</button>
+        </div>
+        <p class="share-status" id="shareStatus" role="status"></p>
       </div>
 
       <p class="settings-note">Saved on this device only. Nobody sees this until the race is over.</p>

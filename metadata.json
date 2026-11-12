@@ -1,0 +1,6 @@
+{
+  "name": "Gender Reveal Formula 1 Grand Prix",
+  "description": "An interactive broadcast-style 30-second Formula 1 race game for a dramatic gender reveal, featuring Team Boy Racing vs Team Girl Racing, lights-out start, wheel-to-wheel racing, and a podium finale.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

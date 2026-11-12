@@ -27,6 +27,7 @@ export const F1RaceTrack: React.FC<F1RaceTrackProps> = ({
     const startedAt = Date.now();
     const challenger: GenderWinner = winner === 'boy' ? 'girl' : 'boy';
     let finished = false;
+    let finishTransitionTimer: number | null = null;
 
     const sendRadio = (
       id: string,
@@ -108,13 +109,14 @@ export const F1RaceTrack: React.FC<F1RaceTrackProps> = ({
           'finish',
           winner,
         );
-        window.setTimeout(() => callbacks.current.onRaceFinish(), 900);
+        finishTransitionTimer = window.setTimeout(() => callbacks.current.onRaceFinish(), 900);
       }
     }, 100);
 
     return () => {
       window.clearInterval(ticker);
       milestoneTimers.forEach(window.clearTimeout);
+      if (finishTransitionTimer !== null) window.clearTimeout(finishTransitionTimer);
       f1Sound.stopEngine();
     };
   }, [winner]);

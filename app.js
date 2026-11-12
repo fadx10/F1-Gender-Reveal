@@ -128,6 +128,7 @@
     winnerTag: $('#winnerTag'),
     gearBtn: $('#gearBtn'),
     soundBtn: $('#soundBtn'),
+    fullscreenBtn: $('#fullscreenBtn'),
     settingsModal: $('#settingsModal'),
     settingsPanel: $('#genderOptions'),
     saveSettings: $('#saveSettings'),
@@ -1470,6 +1471,47 @@ function refreshSoundIcon() {
   els.soundBtn.title = Sound.muted ? 'Unmute sound' : 'Mute sound';
 }
 
+function fullscreenElement() {
+  return document.fullscreenElement
+    || document.webkitFullscreenElement
+    || document.msFullscreenElement
+    || null;
+}
+
+function fullscreenSupported() {
+  const el = document.documentElement;
+  return !!(el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen);
+}
+
+function updateFullscreenButton() {
+  const active = !!fullscreenElement();
+  els.fullscreenBtn.classList.toggle('is-fullscreen', active);
+  els.fullscreenBtn.setAttribute('aria-label', active ? 'Exit fullscreen' : 'Enter fullscreen');
+  els.fullscreenBtn.title = active ? 'Exit fullscreen' : 'Enter fullscreen';
+}
+
+async function toggleFullscreen() {
+  if (!fullscreenSupported()) return;
+
+  try {
+    if (!fullscreenElement()) {
+      const el = document.documentElement;
+      const request = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
+      const result = request.call(el);
+      if (result && typeof result.then === 'function') await result;
+    } else {
+      const exit = document.exitFullscreen || document.webkitExitFullscreen || document.msExitFullscreen;
+      const result = exit.call(document);
+      if (result && typeof result.then === 'function') await result;
+    }
+  } catch (err) {
+    // Some browsers block fullscreen or do not support it for this element.
+  }
+
+  updateFullscreenButton();
+  Sound.click();
+}
+
 function toggleSound() {
   Sound.setMuted(!Sound.muted);
   try {
@@ -1913,6 +1955,11 @@ els.settingsModal.addEventListener('click', (e) => {
 });
 
 els.soundBtn.addEventListener('click', toggleSound);
+els.fullscreenBtn.addEventListener('click', toggleFullscreen);
+
+document.addEventListener('fullscreenchange', updateFullscreenButton);
+document.addEventListener('webkitfullscreenchange', updateFullscreenButton);
+document.addEventListener('MSFullscreenChange', updateFullscreenButton);
 
 els.shareBoy.addEventListener('click', () => buildShareLink('boy'));
 els.shareGirl.addEventListener('click', () => buildShareLink('girl'));
@@ -1942,6 +1989,8 @@ window.addEventListener('keydown', (e) => {
     if (S.mode === 'revealed' || S.mode === 'finished') startCountdown();
   } else if (e.key === 'm' || e.key === 'M') {
     toggleSound();
+  } else if (e.key === 'f' || e.key === 'F') {
+    toggleFullscreen();
   }
 });
 
@@ -1962,6 +2011,9 @@ refreshSoundIcon();
 syncOptions();
 updateControls();
 updateHUD();
+
+if (!fullscreenSupported()) els.fullscreenBtn.style.display = 'none';
+updateFullscreenButton();
 
 // A shared link carries the pre-picked result and hides the parent controls.
 if (sharedGender) {

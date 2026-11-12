@@ -101,6 +101,16 @@ canvas#fx {
   transform: none;
 }
 
+.icon-btn svg {
+  width: 19px;
+  height: 19px;
+  display: block;
+}
+
+.icon-btn .fs-exit { display: none; }
+.icon-btn.is-fullscreen .fs-enter { display: none; }
+.icon-btn.is-fullscreen .fs-exit { display: block; }
+
 /* ============================================================
    HUD
    ============================================================ */

@@ -114,6 +114,7 @@
 }
 .race-track {
   height: clamp(260px, 43vh, 430px);
+  container-type: inline-size;
   background:
     linear-gradient(180deg, transparent 0 19%, #f8fafc 19% 20%, transparent 20% 80%, #f8fafc 80% 81%, transparent 81%),
     repeating-linear-gradient(90deg, transparent 0 48px, rgba(255,255,255,.07) 49px 51px, transparent 52px 100px),
@@ -157,7 +158,6 @@
   font-size: clamp(2.5rem, 6vw, 5rem);
   line-height: 1;
   filter: drop-shadow(0 9px 9px rgba(0,0,0,.55));
-  transform: scaleX(-1);
   animation: race-car-bounce .22s ease-in-out infinite alternate;
 }
 .race-car-label {
@@ -195,7 +195,7 @@
   50% { transform: translateX(9vw); }
   66% { transform: translateX(14vw); }
   82% { transform: translateX(23vw); }
-  100% { transform: translateX(min(55vw, 620px)); }
+  100% { transform: translateX(calc(88cqw - 100%)); }
 }
 @keyframes race-chaser {
   0% { transform: translateX(3vw); }

@@ -1,4 +1,5 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Flag, Gauge, Radio, Zap } from 'lucide-react';
 import { GenderWinner, RaceTelemetry, RaceRadioMessage } from '../types';
 import { f1Sound } from '../utils/audio';
 
@@ -9,23 +10,7 @@ interface F1RaceTrackProps {
   onRaceFinish: () => void;
 }
 
-interface SparkParticle {
-  x: number;
-  y: number;
-  vx: number;
-  vy: number;
-  life: number;
-  color: string;
-}
-
-interface SmokeParticle {
-  x: number;
-  y: number;
-  vx: number;
-  vy: number;
-  size: number;
-  alpha: number;
-}
+const RACE_DURATION = 30_000;
 
 export const F1RaceTrack: React.FC<F1RaceTrackProps> = ({
   winner,
@@ -33,752 +18,192 @@ export const F1RaceTrack: React.FC<F1RaceTrackProps> = ({
   onRadioMessage,
   onRaceFinish,
 }) => {
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [elapsed, setElapsed] = useState(0);
+  const callbacks = useRef({ onTelemetryUpdate, onRadioMessage, onRaceFinish });
+
+  callbacks.current = { onTelemetryUpdate, onRadioMessage, onRaceFinish };
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    const startedAt = Date.now();
+    const challenger: GenderWinner = winner === 'boy' ? 'girl' : 'boy';
+    let finished = false;
 
-    let animId: number;
-    let startTime: number | null = null;
-    let lastFrameTime: number | null = null;
-    let lastTelemetryTime = -Infinity;
-    let finishTimeout: number | null = null;
-    const RACE_DURATION = 30.0;
+    const sendRadio = (
+      id: string,
+      second: number,
+      lap: string,
+      text: string,
+      type: RaceRadioMessage['type'],
+      team?: GenderWinner,
+    ) => callbacks.current.onRadioMessage({ id, second, lap, text, type, team });
 
-    // Track scroll offset for illusion of infinite 330 km/h speed
-    let trackScroll = 0;
-    let trackCurvature = 0;
-
-    // Cars dynamic positions on screen
-    // screen logical coordinates: 1200 x 700
-    // X axis: horizontal track position (0: back of screen, 1200: front)
-    // Y axis: lateral lane position (track lanes between 240 and 460)
-    const firstLeader = winner === 'boy' ? 'girl' : 'boy';
-    const finalWinner = winner;
-
-    const carBoy = {
-      x: 350,
-      y: 280,
-      targetX: 350,
-      targetY: 280,
-      speed: 310,
-      drs: false,
-      braking: false,
-      steerAngle: 0,
-    };
-
-    const carGirl = {
-      x: 320,
-      y: 400,
-      targetX: 320,
-      targetY: 400,
-      speed: 308,
-      drs: false,
-      braking: false,
-      steerAngle: 0,
-    };
-
-    const sparks: SparkParticle[] = [];
-    const smoke: SmokeParticle[] = [];
-
-    // Milestone audio / commentary flags
-    let turn1OvertakeFired = false;
-    let radio1Fired = false;
-    let chicaneOvertakeFired = false;
-    let finalLapFired = false;
-    let finalSlingshotFired = false;
-    let raceFinished = false;
-
-    // Canvas scaling
-    const handleResize = () => {
-      const rect = canvas.getBoundingClientRect();
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      canvas.width = rect.width * dpr;
-      canvas.height = rect.height * dpr;
-    };
-    handleResize();
-    window.addEventListener('resize', handleResize);
-
-    // Initial launch audio
     f1Sound.startEngine();
-    f1Sound.playTireScreech();
+    sendRadio(
+      'lightsout',
+      0,
+      'LAP 1/3',
+      'LIGHTS OUT! Both teams launch from the grid. The Grand Prix is underway!',
+      'commentator',
+    );
 
-    onRadioMessage({
-      id: 'lightsout',
-      second: 0,
-      lap: 'LAP 1/3',
-      text: 'LIGHTS OUT! Wheel-to-wheel launch off the grid! Engine screams at 12,000 RPM!',
-      type: 'commentator',
-    });
+    const milestoneTimers = [
+      window.setTimeout(() => {
+        f1Sound.playTireScreech();
+        sendRadio('turn1', 3, 'LAP 1/3', `Team ${challenger === 'boy' ? 'Boy' : 'Girl'} gets the early jump into Turn 1!`, 'overtake', challenger);
+      }, 3_000),
+      window.setTimeout(() => {
+        f1Sound.playTeamRadio();
+        f1Sound.playDrsChime();
+        sendRadio('radio_chase', 9, 'LAP 1/3', 'TEAM RADIO: DRS enabled. Deploy the battery and make the move!', 'radio', winner);
+      }, 9_000),
+      window.setTimeout(() => {
+        f1Sound.playTireScreech();
+        f1Sound.playKerbBuzz();
+        sendRadio('chicane_pass', 15, 'LAP 2/3', `Brilliant move! Team ${winner === 'boy' ? 'Boy' : 'Girl'} takes the lead into the chicane!`, 'overtake', winner);
+      }, 15_000),
+      window.setTimeout(() => {
+        f1Sound.playTeamRadio();
+        sendRadio('finallap', 22, 'FINAL LAP', 'FINAL LAP! The two cars are battling wheel-to-wheel!', 'flag');
+      }, 22_000),
+      window.setTimeout(() => {
+        f1Sound.playDrsChime();
+        sendRadio('slingshot', 27, 'FINAL LAP', `Final push! Team ${winner === 'boy' ? 'Boy' : 'Girl'} makes the decisive move for the line!`, 'commentator', winner);
+      }, 27_000),
+    ];
 
-    const render = (timestamp: number) => {
-      if (startTime === null) startTime = timestamp;
-      const elapsed = (timestamp - startTime) / 1000;
-      const deltaSeconds = lastFrameTime === null ? 0 : Math.min((timestamp - lastFrameTime) / 1000, 0.05);
-      const frameScale = deltaSeconds * 60;
-      lastFrameTime = timestamp;
+    const ticker = window.setInterval(() => {
+      const elapsedMs = Math.min(Date.now() - startedAt, RACE_DURATION);
+      const seconds = elapsedMs / 1000;
+      setElapsed(seconds);
 
-      // High-speed asphalt scroll rate (330 km/h), normalized to elapsed time.
-      trackScroll += 48 * frameScale;
-      trackCurvature = Math.sin(elapsed * 0.7) * 45;
+      const leader: GenderWinner = seconds < 15 ? challenger : winner;
+      const speed = Math.round(315 + Math.sin(seconds * 1.7) * 16);
+      const chaseSpeed = Math.round(309 + Math.cos(seconds * 1.3) * 13);
+      f1Sound.setEngineRpm(0.45 + (speed / 350) * 0.5);
 
-      let p1Team: 'boy' | 'girl' = firstLeader;
-      let gap = 0.35;
-      let currentLap = elapsed < 11 ? 1 : elapsed < 22 ? 2 : 3;
+      callbacks.current.onTelemetryUpdate({
+        p1: leader,
+        p2: leader === 'boy' ? 'girl' : 'boy',
+        gapSeconds: seconds < 15 ? 0.32 - seconds * 0.012 : Math.max(0.08, 0.18 - (seconds - 15) * 0.006),
+        lap: Math.min(3, Math.floor(seconds / 10) + 1),
+        totalLaps: 3,
+        boySpeed: leader === 'boy' ? speed : chaseSpeed,
+        girlSpeed: leader === 'girl' ? speed : chaseSpeed,
+        boyDrs: seconds >= 9 && seconds < 15 && winner === 'boy' || seconds >= 27 && winner === 'boy',
+        girlDrs: seconds >= 9 && seconds < 15 && winner === 'girl' || seconds >= 27 && winner === 'girl',
+        sector: (Math.floor((seconds % 10) / (10 / 3)) + 1) as 1 | 2 | 3,
+      }, seconds);
 
-      // ==========================================
-      // BACK-AND-FORTH WHEEL-TO-WHEEL SCRIPT
-      // ==========================================
-
-      // PHASE 1: 0s - 7s (The Grid Launch & Turn 1 Dive)
-      if (elapsed < 7.0) {
-        if (firstLeader === 'boy') {
-          carBoy.targetX = 640;
-          carBoy.targetY = 320;
-          carGirl.targetX = 460;
-          carGirl.targetY = 410;
-        } else {
-          carGirl.targetX = 640;
-          carGirl.targetY = 390;
-          carBoy.targetX = 460;
-          carBoy.targetY = 300;
-        }
-
-        if (!turn1OvertakeFired && elapsed > 2.8) {
-          turn1OvertakeFired = true;
-          f1Sound.playTireScreech();
-          f1Sound.playKerbBuzz();
-          onRadioMessage({
-            id: 'turn1',
-            second: 3,
-            lap: 'LAP 1/3',
-            text: `Team ${firstLeader === 'boy' ? 'Boy' : 'Girl'} takes the lead! Lunges down the inside at Turn 1!`,
-            type: 'overtake',
-            team: firstLeader,
-          });
-        }
-        gap = 0.28 + Math.sin(elapsed * 2) * 0.08;
+      if (elapsedMs >= RACE_DURATION && !finished) {
+        finished = true;
+        window.clearInterval(ticker);
+        f1Sound.playCheckeredFlag();
+        f1Sound.stopEngine();
+        f1Sound.playPodiumFanfare();
+        sendRadio(
+          'finish',
+          30,
+          'CHECKERED FLAG',
+          `CHECKERED FLAG! TEAM ${winner.toUpperCase()} WINS THE GRAND PRIX!`,
+          'finish',
+          winner,
+        );
+        window.setTimeout(() => callbacks.current.onRaceFinish(), 900);
       }
-
-      // PHASE 2: 7s - 14s (Slipstream & DRS Attack on Straight)
-      else if (elapsed >= 7.0 && elapsed < 15.0) {
-        // Trailing car tucks right behind into slipstream, then pulls out!
-        if (finalWinner === 'boy') {
-          // Boy tucks directly behind girl
-          if (elapsed < 10.5) {
-            carBoy.targetX = carGirl.x - 110;
-            carBoy.targetY = carGirl.y; // slipstream draft
-            carBoy.drs = false;
-          } else {
-            // Boy pulls out to overtake!
-            carBoy.targetX = carGirl.x + 80;
-            carBoy.targetY = 280;
-            carBoy.drs = true; // DRS opens!
-          }
-        } else {
-          // Girl tucks directly behind boy
-          if (elapsed < 10.5) {
-            carGirl.targetX = carBoy.x - 110;
-            carGirl.targetY = carBoy.y;
-            carGirl.drs = false;
-          } else {
-            // Girl pulls out to overtake!
-            carGirl.targetX = carBoy.x + 80;
-            carGirl.targetY = 410;
-            carGirl.drs = true;
-          }
-        }
-
-        if (!radio1Fired && elapsed > 8.8) {
-          radio1Fired = true;
-          f1Sound.playTeamRadio();
-          f1Sound.playDrsChime();
-          onRadioMessage({
-            id: 'radio_chase',
-            second: 9,
-            lap: 'LAP 1/3',
-            text: `📻 Team Radio: "DRS enabled. Maximum battery deploy! Go get them!"`,
-            type: 'radio',
-            team: finalWinner,
-          });
-        }
-        gap = Math.max(0.08, 0.32 - (elapsed - 7.0) * 0.035);
-      }
-
-      // PHASE 3: 15s - 22s (Heavy Braking & Position Swap into the Chicane!)
-      else if (elapsed >= 15.0 && elapsed < 22.0) {
-        p1Team = finalWinner; // Lead changes!
-
-        if (finalWinner === 'boy') {
-          carBoy.targetX = 680;
-          carBoy.targetY = 320;
-          carGirl.targetX = 520;
-          carGirl.targetY = 420;
-          carBoy.drs = false;
-        } else {
-          carGirl.targetX = 680;
-          carGirl.targetY = 380;
-          carBoy.targetX = 520;
-          carBoy.targetY = 290;
-          carGirl.drs = false;
-        }
-
-        if (!chicaneOvertakeFired) {
-          chicaneOvertakeFired = true;
-          f1Sound.playTireScreech();
-          f1Sound.playKerbBuzz();
-          onRadioMessage({
-            id: 'chicane_pass',
-            second: 15,
-            lap: 'LAP 2/3',
-            text: `SENSATIONAL OVERTAKE! Late on the brakes into the chicane! Team ${finalWinner === 'boy' ? 'Boy' : 'Girl'} takes P1!`,
-            type: 'overtake',
-            team: finalWinner,
-          });
-        }
-        gap = 0.16 + Math.sin(elapsed * 3) * 0.05;
-      }
-
-      // PHASE 4: 22s - 26.5s (Final Lap Wheel-to-Wheel Jostle)
-      else if (elapsed >= 22.0 && elapsed < 26.5) {
-        // Cars side-by-side, oscillating back and forth by inches!
-        const sway = Math.sin(elapsed * 5) * 40;
-        if (finalWinner === 'boy') {
-          carBoy.targetX = 620 + sway;
-          carBoy.targetY = 310;
-          carGirl.targetX = 600 - sway;
-          carGirl.targetY = 410;
-        } else {
-          carGirl.targetX = 620 + sway;
-          carGirl.targetY = 390;
-          carBoy.targetX = 600 - sway;
-          carBoy.targetY = 290;
-        }
-
-        if (!finalLapFired) {
-          finalLapFired = true;
-          f1Sound.playTeamRadio();
-          f1Sound.playKerbBuzz();
-          onRadioMessage({
-            id: 'finallap',
-            second: 22,
-            lap: 'FINAL LAP',
-            text: '🏁 WHITE FLAG! Final lap! Side-by-side rubbing tires at 320 km/h!',
-            type: 'flag',
-          });
-        }
-        gap = 0.06 + Math.abs(Math.sin(elapsed * 4)) * 0.04;
-      }
-
-      // PHASE 5: 26.5s - 30.0s (The Final Slingshot & Checkered Flag!)
-      else if (elapsed >= 26.5) {
-        p1Team = finalWinner;
-
-        // Winning car launches forward to seal the championship!
-        if (finalWinner === 'boy') {
-          carBoy.targetX = 780;
-          carBoy.targetY = 340;
-          carGirl.targetX = 540;
-          carGirl.targetY = 410;
-          carBoy.drs = true;
-        } else {
-          carGirl.targetX = 780;
-          carGirl.targetY = 370;
-          carBoy.targetX = 540;
-          carBoy.targetY = 280;
-          carGirl.drs = true;
-        }
-
-        if (!finalSlingshotFired) {
-          finalSlingshotFired = true;
-          f1Sound.playTireScreech();
-          f1Sound.playDrsChime();
-          onRadioMessage({
-            id: 'slingshot',
-            second: 27,
-            lap: 'FINAL LAP',
-            text: `FINAL CORNER! Team ${finalWinner === 'boy' ? 'Boy' : 'Girl'} pulls out from the tow and surges ahead! Full throttle to the line!`,
-            type: 'commentator',
-          });
-        }
-
-        gap = 0.24;
-
-        if (elapsed >= 29.6 && !raceFinished) {
-          raceFinished = true;
-          f1Sound.playCheckeredFlag();
-          f1Sound.stopEngine();
-          f1Sound.playPodiumFanfare();
-          onRadioMessage({
-            id: 'finish',
-            second: 30,
-            lap: 'CHECKERED FLAG',
-            text: `CHECKERED FLAG! TEAM ${finalWinner.toUpperCase()} CROSSES THE LINE TO WIN THE GRAND PRIX!`,
-            type: 'finish',
-            team: finalWinner,
-          });
-          finishTimeout = window.setTimeout(() => {
-            onRaceFinish();
-          }, 700);
-        }
-      }
-
-      // Smooth lerp car positions
-      const positionBlend = 1 - Math.pow(1 - 0.08, frameScale);
-      carBoy.x += (carBoy.targetX - carBoy.x) * positionBlend;
-      carBoy.y += (carBoy.targetY - carBoy.y) * positionBlend;
-      carBoy.steerAngle = (carBoy.targetY - carBoy.y) * 0.04;
-
-      carGirl.x += (carGirl.targetX - carGirl.x) * positionBlend;
-      carGirl.y += (carGirl.targetY - carGirl.y) * positionBlend;
-      carGirl.steerAngle = (carGirl.targetY - carGirl.y) * 0.04;
-
-      // Telemetry update
-      const speed1 = Math.floor(328 + Math.sin(elapsed * 3) * 12);
-      const speed2 = Math.floor(320 + Math.cos(elapsed * 3) * 10);
-      f1Sound.setEngineRpm(0.4 + (speed1 / 340) * 0.6);
-
-      // React telemetry is sampled at 10 Hz; canvas animation remains at display refresh rate.
-      if (elapsed - lastTelemetryTime >= 0.1 || elapsed >= RACE_DURATION) {
-        onTelemetryUpdate({
-          p1: p1Team,
-          p2: p1Team === 'boy' ? 'girl' : 'boy',
-          gapSeconds: Number(gap.toFixed(3)),
-          lap: currentLap,
-          totalLaps: 3,
-          boySpeed: p1Team === 'boy' ? speed1 : speed2,
-          girlSpeed: p1Team === 'girl' ? speed1 : speed2,
-          boyDrs: carBoy.drs,
-          girlDrs: carGirl.drs,
-          sector: elapsed % 10 < 3.3 ? 1 : elapsed % 10 < 6.6 ? 2 : 3,
-        }, Math.min(elapsed, RACE_DURATION));
-        lastTelemetryTime = elapsed;
-      }
-
-      // Emit titanium sparks from cars during high speeds
-      [carBoy, carGirl].forEach((car) => {
-        if (Math.random() < 1 - Math.pow(1 - 0.5, frameScale)) {
-          sparks.push({
-            x: car.x - 70,
-            y: car.y + (Math.random() - 0.5) * 16,
-            vx: -(Math.random() * 8 + 6),
-            vy: (Math.random() - 0.5) * 3,
-            life: 1.0,
-            color: Math.random() > 0.3 ? '#fbbf24' : '#ffffff',
-          });
-        }
-      });
-
-      // Update sparks
-      for (let i = sparks.length - 1; i >= 0; i--) {
-        const s = sparks[i];
-        s.x += s.vx * frameScale;
-        s.y += s.vy * frameScale;
-        s.life -= 0.05 * frameScale;
-        if (s.life <= 0) sparks.splice(i, 1);
-      }
-
-      // DRAW CANVAS
-      const w = canvas.width;
-      const h = canvas.height;
-      ctx.clearRect(0, 0, w, h);
-
-      // Fit logical 1200x700 into canvas with letterboxing/scaling
-      const scale = Math.min(w / 1200, h / 700);
-      const offsetX = (w - 1200 * scale) / 2;
-      const offsetY = (h - 700 * scale) / 2;
-
-      ctx.save();
-      ctx.translate(offsetX, offsetY);
-      ctx.scale(scale, scale);
-
-      // 1. Draw High-Speed Asphalt Track & Rumble Kerbs (Scrolling in real-time)
-      drawHighSpeedTrack(ctx, trackScroll, trackCurvature, elapsed);
-
-      // 2. Draw Checkered Finish Line if at final second
-      if (elapsed >= 28.5) {
-        const lineX = 1200 - ((elapsed - 28.5) / 1.5) * 650;
-        drawFinishLineAcrossTrack(ctx, lineX);
-      }
-
-      // 3. Draw Titanium Sparks
-      sparks.forEach((s) => {
-        ctx.save();
-        ctx.fillStyle = s.color;
-        ctx.globalAlpha = s.life;
-        ctx.shadowColor = '#f59e0b';
-        ctx.shadowBlur = 8;
-        ctx.beginPath();
-        ctx.arc(s.x, s.y, 3 * s.life, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-      });
-
-      // 4. Draw 3D Detailed Formula 1 Cars (Sorted by Y for correct visual layering)
-      const cars = [
-        { car: carBoy, team: 'boy' as const },
-        { car: carGirl, team: 'girl' as const },
-      ].sort((a, b) => a.car.y - b.car.y);
-
-      cars.forEach(({ car, team }) => {
-        draw3DFormula1Car(ctx, car.x, car.y, car.steerAngle, car.drs, team, elapsed);
-      });
-
-      ctx.restore();
-
-      if (elapsed < RACE_DURATION + 1.2) {
-        animId = requestAnimationFrame(render);
-      }
-    };
-
-    animId = requestAnimationFrame(render);
+    }, 100);
 
     return () => {
-      cancelAnimationFrame(animId);
-      if (finishTimeout !== null) window.clearTimeout(finishTimeout);
-      window.removeEventListener('resize', handleResize);
+      window.clearInterval(ticker);
+      milestoneTimers.forEach(window.clearTimeout);
       f1Sound.stopEngine();
     };
   }, [winner]);
 
-  // Draw high-speed infinite scrolling track with kerbs, barriers, and grass
-  const drawHighSpeedTrack = (
-    ctx: CanvasRenderingContext2D,
-    scroll: number,
-    curve: number,
-    elapsed: number
-  ) => {
-    // 1. Infield green grass
-    ctx.fillStyle = '#064e3b';
-    ctx.fillRect(0, 0, 1200, 700);
-
-    // 2. Red & White Kerbs (Top Kerb: Y=180, Bottom Kerb: Y=510)
-    const kerbSize = 40;
-    const kerbOffset = scroll % (kerbSize * 2);
-
-    // Top Kerb
-    for (let x = -kerbSize * 2; x < 1200 + kerbSize * 2; x += kerbSize) {
-      const isRed = Math.floor((x - kerbOffset) / kerbSize) % 2 === 0;
-      ctx.fillStyle = isRed ? '#dc2626' : '#ffffff';
-      ctx.fillRect(x - kerbOffset, 175, kerbSize, 25);
-      // Bottom Kerb
-      ctx.fillRect(x - kerbOffset, 500, kerbSize, 25);
-    }
-
-    // 3. Main Asphalt Racing Ribbon (Height 300px between Y=200 and Y=500)
-    ctx.fillStyle = '#0f172a';
-    ctx.fillRect(0, 200, 1200, 300);
-
-    // Dark rubberized racing groove
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
-    ctx.fillRect(0, 240, 1200, 80);
-    ctx.fillRect(0, 380, 1200, 80);
-
-    // 4. White Dash Lanes (Center Track Markings)
-    const dashLen = 60;
-    const dashGap = 40;
-    const totalDash = dashLen + dashGap;
-    const dashOffset = scroll % totalDash;
-
-    ctx.save();
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
-    for (let x = -totalDash; x < 1200 + totalDash; x += totalDash) {
-      ctx.fillRect(x - dashOffset, 347, dashLen, 6);
-    }
-    ctx.restore();
-
-    // 5. Overhead Speed Lines & Motion Blur streaks
-    ctx.save();
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
-    ctx.lineWidth = 1.5;
-    for (let i = 0; i < 8; i++) {
-      const lineY = 210 + i * 36;
-      const lx = ((scroll * 1.8 + i * 190) % 1300) - 100;
-      ctx.beginPath();
-      ctx.moveTo(1200 - lx, lineY);
-      ctx.lineTo(1200 - lx + 120, lineY);
-      ctx.stroke();
-    }
-    ctx.restore();
-
-    // 6. Trackside Grandstands & Cheering Fans (Top border Y=0 to 175)
-    ctx.fillStyle = '#1e293b';
-    ctx.fillRect(0, 0, 1200, 170);
-
-    // Grandstand crowd dots waving
-    for (let r = 0; r < 4; r++) {
-      for (let c = 0; c < 48; c++) {
-        const fx = c * 25 + (r % 2) * 12;
-        const fy = 35 + r * 30;
-        const wave = Math.sin(elapsed * 5 + c * 0.3) * 3;
-        ctx.fillStyle = (c + r) % 2 === 0 ? '#38bdf8' : '#f472b6';
-        ctx.beginPath();
-        ctx.arc(fx, fy + wave, 3.5, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
-
-    // Top Crash Barrier Fence
-    ctx.strokeStyle = '#64748b';
-    ctx.lineWidth = 4;
-    ctx.beginPath();
-    ctx.moveTo(0, 172);
-    ctx.lineTo(1200, 172);
-    ctx.stroke();
-
-    // Bottom Crash Barrier Fence
-    ctx.beginPath();
-    ctx.moveTo(0, 528);
-    ctx.lineTo(1200, 528);
-    ctx.stroke();
-  };
-
-  // Draw Finish Line across track on the final lap
-  const drawFinishLineAcrossTrack = (ctx: CanvasRenderingContext2D, x: number) => {
-    ctx.save();
-    const squareSize = 15;
-    const rows = 20; // 300px track / 15
-    for (let r = 0; r < rows; r++) {
-      for (let c = 0; c < 2; c++) {
-        const isWhite = (r + c) % 2 === 0;
-        ctx.fillStyle = isWhite ? '#ffffff' : '#000000';
-        ctx.fillRect(x + c * squareSize, 200 + r * squareSize, squareSize, squareSize);
-      }
-    }
-
-    // Overhead Checkered Flag Banner
-    ctx.fillStyle = '#f59e0b';
-    ctx.fillRect(x - 5, 170, 40, 8);
-    ctx.fillRect(x - 5, 522, 40, 8);
-    ctx.restore();
-  };
-
-  // Draw true 3D detailed Formula 1 car with layered depth, halo, openable DRS, carbon-fiber wings, and glowing exhaust
-  const draw3DFormula1Car = (
-    ctx: CanvasRenderingContext2D,
-    x: number,
-    y: number,
-    steerAngle: number,
-    drsActive: boolean,
-    team: 'boy' | 'girl',
-    elapsed: number
-  ) => {
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.rotate(steerAngle * 0.5); // subtle chassis heading
-
-    const isBoy = team === 'boy';
-
-    // 3D Color Palette
-    const liveryPrimary = isBoy ? '#0284c7' : '#ec4899';
-    const liveryHighlight = isBoy ? '#38bdf8' : '#f472b6';
-    const liveryShadow = isBoy ? '#0369a1' : '#be185d';
-    const liveryDark = isBoy ? '#0c4a6e' : '#831843';
-
-    // 1. 3D Underfloor Ground Shadow (ambient occlusion on asphalt)
-    ctx.save();
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
-    ctx.beginPath();
-    ctx.roundRect(-85, -34, 170, 68, 12);
-    ctx.fill();
-    ctx.restore();
-
-    // 2. 4 Large 3D Pirelli Tires with Rim Reflections
-    const tireWidth = 26;
-    const tireHeight = 15;
-
-    const drawTire = (tx: number, ty: number, isFront: boolean) => {
-      ctx.save();
-      ctx.translate(tx, ty);
-      if (isFront) {
-        ctx.rotate(steerAngle * 1.5); // front wheels steer
-      }
-
-      // Tire rubber (dark matte charcoal)
-      ctx.fillStyle = '#0f172a';
-      ctx.beginPath();
-      ctx.roundRect(-tireWidth / 2, -tireHeight / 2, tireWidth, tireHeight, 4);
-      ctx.fill();
-
-      // Yellow Soft Compound Sidewall stripe
-      ctx.strokeStyle = '#fbbf24';
-      ctx.lineWidth = 1.8;
-      ctx.strokeRect(-tireWidth / 2 + 1, -tireHeight / 2 + 1, tireWidth - 2, tireHeight - 2);
-
-      // Rotating rim spokes blur
-      ctx.fillStyle = '#64748b';
-      const spokeOffset = Math.sin(elapsed * 25) * 4;
-      ctx.fillRect(-tireWidth / 4 + spokeOffset, -2, 6, 4);
-
-      ctx.restore();
-    };
-
-    // Front Left & Right Tires
-    drawTire(45, -35, true);
-    drawTire(45, 35, true);
-
-    // Rear Left & Right Tires (wider tread footprint)
-    drawTire(-55, -38, false);
-    drawTire(-55, 38, false);
-
-    // 3. Carbon Fiber Aerodynamic Front Wing (Multi-Element with 3D Endplates)
-    ctx.save();
-    // Wing Main Plane (front at X = +75)
-    ctx.fillStyle = '#1e293b'; // carbon base
-    ctx.beginPath();
-    ctx.roundRect(62, -34, 18, 68, 3);
-    ctx.fill();
-
-    // Wing Flaps (team colors with aerodynamic curvature)
-    ctx.fillStyle = liveryHighlight;
-    ctx.fillRect(65, -30, 4, 60);
-    ctx.fillStyle = liveryPrimary;
-    ctx.fillRect(70, -32, 5, 64);
-
-    // Left and Right Endplates with 3D bevels
-    ctx.fillStyle = liveryDark;
-    ctx.fillRect(62, -36, 18, 3.5);
-    ctx.fillRect(62, 32.5, 18, 3.5);
-    ctx.restore();
-
-    // 4. Main 3D Tapered Monocoque Chassis Body
-    ctx.save();
-    // Lower chassis base shadow
-    ctx.fillStyle = liveryShadow;
-    ctx.beginPath();
-    ctx.moveTo(70, -6);
-    ctx.lineTo(25, -24);
-    ctx.lineTo(-45, -26);
-    ctx.lineTo(-65, -12);
-    ctx.lineTo(-65, 12);
-    ctx.lineTo(-45, 26);
-    ctx.lineTo(25, 24);
-    ctx.lineTo(70, 6);
-    ctx.closePath();
-    ctx.fill();
-
-    // Upper chassis body with specular gradient
-    const bodyGrad = ctx.createLinearGradient(0, -25, 0, 25);
-    bodyGrad.addColorStop(0, liveryHighlight);
-    bodyGrad.addColorStop(0.3, liveryPrimary);
-    bodyGrad.addColorStop(0.7, liveryPrimary);
-    bodyGrad.addColorStop(1, liveryShadow);
-
-    ctx.fillStyle = bodyGrad;
-    ctx.beginPath();
-    ctx.moveTo(68, -4);
-    ctx.lineTo(24, -20);
-    ctx.lineTo(-42, -22);
-    ctx.lineTo(-62, -10);
-    ctx.lineTo(-62, 10);
-    ctx.lineTo(-42, 22);
-    ctx.lineTo(24, 20);
-    ctx.lineTo(68, 4);
-    ctx.closePath();
-    ctx.fill();
-
-    // Sidepod Air Intakes with 3D black radiator mouths
-    ctx.fillStyle = '#020617';
-    ctx.fillRect(10, -22, 14, 5);
-    ctx.fillRect(10, 17, 14, 5);
-
-    // Cockpit & Halo Protection Hoop
-    ctx.fillStyle = '#090d16';
-    ctx.beginPath();
-    ctx.ellipse(-5, 0, 18, 10, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Driver Helmet (3D Visor with iridescent shine)
-    ctx.fillStyle = isBoy ? '#60a5fa' : '#f472b6';
-    ctx.beginPath();
-    ctx.arc(-4, 0, 6.5, 0, Math.PI * 2);
-    ctx.fill();
-    // Helmet visor
-    ctx.fillStyle = '#0f172a';
-    ctx.fillRect(-2, -3.5, 5, 7);
-
-    // Halo 3D Curved Titanium Structure
-    ctx.strokeStyle = '#475569';
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.arc(-3, 0, 9, -Math.PI / 2, Math.PI / 2, false);
-    ctx.stroke();
-
-    // Car Number 1 on Nose Cone
-    ctx.fillStyle = '#ffffff';
-    ctx.font = '900 12px system-ui';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('1', 38, 0);
-
-    // 5. 3D Rear Wing with Real-Time DRS Actuator Flap
-    ctx.save();
-    // Rear Wing Pylons
-    ctx.fillStyle = '#1e293b';
-    ctx.fillRect(-68, -4, 8, 8);
-
-    // Main Rear Wing Plane
-    ctx.fillStyle = liveryDark;
-    ctx.fillRect(-76, -32, 10, 64);
-
-    // DRS Upper Flap (physically flips UP when DRS is open!)
-    if (drsActive) {
-      // DRS OPEN: Flap flips flat creating aerodynamic slot gap
-      ctx.fillStyle = '#22c55e'; // Green DRS highlight
-      ctx.fillRect(-78, -26, 4, 52);
-    } else {
-      // DRS CLOSED: High downforce wing element
-      ctx.fillStyle = liveryHighlight;
-      ctx.fillRect(-74, -28, 6, 56);
-    }
-
-    // Wing Endplates
-    ctx.fillStyle = liveryPrimary;
-    ctx.fillRect(-78, -34, 14, 4);
-    ctx.fillRect(-78, 30, 14, 4);
-    ctx.restore();
-
-    // 6. Flashing Red FIA Rain Safety Light
-    ctx.save();
-    ctx.fillStyle = '#ef4444';
-    ctx.shadowColor = '#ef4444';
-    ctx.shadowBlur = 12;
-    ctx.beginPath();
-    ctx.arc(-72, 0, 3, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-
-    // 7. Dynamic Exhaust Flame / ERS Battery Boost Glow
-    if (drsActive || Math.random() < 0.6) {
-      ctx.save();
-      const flameLen = Math.random() * 25 + 18;
-      const flameGrad = ctx.createLinearGradient(-75, 0, -75 - flameLen, 0);
-      flameGrad.addColorStop(0, 'rgba(56, 189, 248, 0.9)'); // blue core
-      flameGrad.addColorStop(0.4, 'rgba(245, 158, 11, 0.8)'); // orange
-      flameGrad.addColorStop(1, 'rgba(239, 68, 68, 0)');
-
-      ctx.fillStyle = flameGrad;
-      ctx.beginPath();
-      ctx.moveTo(-74, -4);
-      ctx.lineTo(-74 - flameLen, 0);
-      ctx.lineTo(-74, 4);
-      ctx.closePath();
-      ctx.fill();
-      ctx.restore();
-    }
-
-    ctx.restore();
-  };
+  const progress = Math.min(100, (elapsed / 30) * 100);
+  const leader = elapsed < 15 ? (winner === 'boy' ? 'girl' : 'boy') : winner;
+  const boyWins = winner === 'boy';
 
   return (
-    <div className="relative w-full h-full flex items-center justify-center bg-slate-950 overflow-hidden select-none">
-      <canvas
-        ref={canvasRef}
-        className="w-full h-full max-w-[1440px] max-h-[900px] object-contain block"
-      />
+    <div className="race-scene absolute inset-0 flex flex-col justify-center overflow-hidden bg-[#07111b] text-white select-none">
+      <div className="race-lights pointer-events-none absolute inset-0" />
+      <div className="relative z-10 mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-4 pt-24 sm:px-8 sm:pt-28">
+        <div className="flex items-center gap-2 rounded-full border border-white/10 bg-slate-950/75 px-3 py-2 text-[10px] font-black tracking-[0.2em] text-slate-300 sm:text-xs">
+          <span className="h-2 w-2 animate-pulse rounded-full bg-red-500" />
+          LIVE GRAND PRIX
+        </div>
+        <div className="rounded-xl border border-white/10 bg-slate-950/75 px-4 py-2 text-center">
+          <div className="text-[9px] font-bold tracking-[0.2em] text-slate-400">RACE CLOCK</div>
+          <div className="font-mono text-lg font-black tabular-nums text-amber-300 sm:text-2xl">
+            00:{Math.floor(elapsed).toString().padStart(2, '0')} <span className="text-xs text-slate-500">/ 00:30</span>
+          </div>
+        </div>
+        <div className="hidden items-center gap-2 rounded-full border border-white/10 bg-slate-950/75 px-3 py-2 text-xs font-bold text-slate-300 sm:flex">
+          <Gauge className="h-4 w-4 text-emerald-400" />
+          {Math.round(315 + Math.sin(elapsed * 1.7) * 16)} KM/H
+        </div>
+      </div>
+
+      <div className="relative z-10 mx-auto my-auto w-full max-w-6xl px-3 sm:px-8">
+        <div className="mb-5 flex items-end justify-between gap-3 sm:mb-8">
+          <div>
+            <div className="text-[10px] font-black tracking-[0.28em] text-amber-300 sm:text-xs">THE REVEAL GRAND PRIX</div>
+            <h2 className="mt-1 font-display text-2xl font-black tracking-tight sm:text-4xl md:text-5xl">
+              {elapsed < 22 ? 'Wheel to wheel.' : 'Final lap. Full throttle.'}
+            </h2>
+          </div>
+          <div className="rounded-lg border border-amber-400/30 bg-amber-400/10 px-3 py-2 text-right">
+            <div className="text-[9px] font-bold tracking-widest text-amber-200/70">LAP</div>
+            <div className="font-mono text-xl font-black text-amber-300">{Math.min(3, Math.floor(elapsed / 10) + 1)}<span className="text-sm text-slate-400">/3</span></div>
+          </div>
+        </div>
+
+        <div className="race-track relative overflow-hidden rounded-[1.75rem] border-y-8 border-red-500/80 bg-[#202a34] shadow-[0_25px_100px_rgba(0,0,0,0.6)]">
+          <div className="race-grandstand absolute inset-x-0 top-0 h-[20%]" />
+          <div className="race-kerb absolute inset-x-0 top-[19%] h-2" />
+          <div className="race-kerb absolute inset-x-0 bottom-[19%] h-2" />
+          <div className="race-lane-line absolute inset-x-0 top-1/2" />
+          <div className="race-finish absolute inset-y-0 right-[7%] w-3 opacity-0" style={{ opacity: elapsed >= 28 ? 1 : 0 }} />
+
+          <div className={`race-car race-car-boy ${boyWins ? 'race-car-winner' : 'race-car-chaser'}`} aria-label="Team Boy racing car">
+            <span className="race-car-label text-sky-200">BOY</span>
+            <span className="race-car-emoji">🏎️</span>
+            <span className="race-car-glow bg-sky-400" />
+          </div>
+          <div className={`race-car race-car-girl ${!boyWins ? 'race-car-winner' : 'race-car-chaser'}`} aria-label="Team Girl racing car">
+            <span className="race-car-label text-pink-200">GIRL</span>
+            <span className="race-car-emoji">🏎️</span>
+            <span className="race-car-glow bg-pink-400" />
+          </div>
+
+          <div className="absolute bottom-3 left-4 z-20 flex items-center gap-2 text-[9px] font-black tracking-widest text-white/50 sm:text-[10px]">
+            <Flag className="h-3 w-3" /> CIRCUIT STRAIGHT
+          </div>
+          <div className="absolute bottom-3 right-4 z-20 font-mono text-[10px] font-bold text-white/50">DRS ZONE</div>
+        </div>
+
+        <div className="mt-5 flex items-center justify-between gap-3 sm:mt-7">
+          <div className={`flex items-center gap-2 text-xs font-black tracking-wider ${leader === 'boy' ? 'text-sky-300' : 'text-pink-300'}`}>
+            <span className="h-2.5 w-2.5 rounded-full bg-current shadow-[0_0_12px_currentColor]" />
+            TEAM {leader.toUpperCase()} CURRENTLY P1
+          </div>
+          <div className="flex items-center gap-2 text-[10px] font-bold tracking-widest text-slate-400">
+            <Radio className="h-3.5 w-3.5 text-amber-300" />
+            <span className="hidden sm:inline">RACE CONTROL</span>
+            <Zap className="h-3.5 w-3.5 text-emerald-400" />
+            <span>DRS</span>
+          </div>
+        </div>
+
+        <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-white/10">
+          <div className="h-full rounded-full bg-gradient-to-r from-sky-400 via-white to-pink-400 transition-[width] duration-100" style={{ width: `${progress}%` }} />
+        </div>
+      </div>
+
+      <div className="relative z-10 mx-auto mb-4 flex w-full max-w-6xl items-center justify-between px-4 text-[9px] font-bold tracking-[0.18em] text-slate-500 sm:px-8 sm:text-[10px]">
+        <span>TEAM BOY RACING</span>
+        <span>MADE FOR THE BIG REVEAL</span>
+        <span>TEAM GIRL RACING</span>
+      </div>
     </div>
   );
 };

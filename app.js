@@ -129,6 +129,9 @@
     smokeAccP: 0,
     nextFirework: 0,
     fxTime: 0,
+    lastLeader: null,
+    lastOvertake: 0,
+    warnIndex: 0,
   };
 
   const smoke = [];
@@ -251,20 +254,132 @@
       this.tone(freq, this.ctx.currentTime, dur, vol == null ? 0.06 : vol, type || 'sine');
     },
 
+    // Filtered noise burst — used for skids, whooshes, crowd and fireworks.
+    noise(when, dur, vol, type, freq, q, sweepTo) {
+      if (!this.ctx || !this.noiseBuffer) return;
+      const c = this.ctx;
+      const src = c.createBufferSource();
+      src.buffer = this.noiseBuffer;
+      src.loop = true;
+
+      const filt = c.createBiquadFilter();
+      filt.type = type || 'bandpass';
+      filt.frequency.setValueAtTime(Math.max(20, freq || 1000), when);
+      if (sweepTo) {
+        filt.frequency.exponentialRampToValueAtTime(Math.max(20, sweepTo), when + dur);
+      }
+      filt.Q.value = q == null ? 0.8 : q;
+
+      const g = c.createGain();
+      g.gain.setValueAtTime(0.0001, when);
+      g.gain.exponentialRampToValueAtTime(Math.max(0.0002, vol), when + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, when + dur);
+
+      src.connect(filt);
+      filt.connect(g);
+      g.connect(this.master);
+      src.start(when);
+      src.stop(when + dur + 0.03);
+    },
+
+    // Simple pitch sweep for starter motors, impacts and doppler effects.
+    sweep(f1, f2, when, dur, vol, type) {
+      if (!this.ctx) return;
+      const c = this.ctx;
+      const o = c.createOscillator();
+      const g = c.createGain();
+      o.type = type || 'sine';
+      o.frequency.setValueAtTime(Math.max(20, f1), when);
+      o.frequency.exponentialRampToValueAtTime(Math.max(20, f2), when + dur);
+      g.gain.setValueAtTime(0.0001, when);
+      g.gain.exponentialRampToValueAtTime(Math.max(0.0002, vol), when + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, when + dur);
+      o.connect(g);
+      g.connect(this.master);
+      o.start(when);
+      o.stop(when + dur + 0.03);
+    },
+
+    // Starter motor, a few thumps, then the engines catch.
+    ignition() {
+      if (!this.ctx) return;
+      const now = this.ctx.currentTime;
+      this.sweep(420, 620, now, 0.5, 0.035, 'sawtooth');
+      this.sweep(620, 130, now + 0.35, 0.32, 0.04, 'sawtooth');
+      this.tone(58, now + 0.48, 0.28, 0.09, 'sine');
+      this.tone(82, now + 0.56, 0.22, 0.06, 'sine');
+      this.noise(now + 0.42, 0.5, 0.045, 'lowpass', 900, 0.6, 320);
+    },
+
+    // Lights out: chirp and launch noise.
     go() {
       if (!this.ctx) return;
       const now = this.ctx.currentTime;
       this.tone(520, now, 0.1, 0.07, 'square');
       this.tone(780, now + 0.08, 0.2, 0.07, 'square');
       this.tone(1040, now + 0.18, 0.4, 0.06, 'square');
+      this.launch();
     },
 
+    // Launch: skid, crowd swell and a low hit as the lights go out.
+    launch() {
+      if (!this.ctx) return;
+      const now = this.ctx.currentTime;
+      this.noise(now, 0.42, 0.09, 'bandpass', 2400, 0.7, 900);
+      this.noise(now + 0.05, 0.9, 0.055, 'bandpass', 700, 0.5, 1500);
+      this.sweep(120, 46, now, 0.5, 0.13, 'sine');
+      this.tone(96, now + 0.05, 0.22, 0.07, 'square');
+    },
+
+    // Short doppler whoosh whenever the lead changes.
+    overtake() {
+      if (!this.ctx) return;
+      const now = this.ctx.currentTime;
+      this.noise(now, 0.3, 0.05, 'bandpass', 620, 1.1, 2600);
+      this.sweep(340, 720, now, 0.16, 0.035, 'sine');
+      this.sweep(720, 300, now + 0.16, 0.16, 0.028, 'sine');
+    },
+
+    // Beeps for the last five seconds, getting more urgent.
+    warning(secondsLeft) {
+      if (!this.ctx) return;
+      const now = this.ctx.currentTime;
+      const urgent = secondsLeft <= 1;
+      const freq = 620 + (5 - secondsLeft) * 80;
+      this.tone(freq, now, urgent ? 0.18 : 0.1, 0.055, 'square');
+      if (urgent) {
+        this.tone(freq * 1.25, now + 0.2, 0.2, 0.05, 'square');
+      }
+    },
+
+    // Finish-line thump, skid and a short crowd roar.
     finish() {
       if (!this.ctx) return;
       const now = this.ctx.currentTime;
       this.tone(880, now, 0.16, 0.07, 'square');
       this.tone(1320, now + 0.1, 0.28, 0.05, 'square');
       this.tone(1760, now + 0.22, 0.4, 0.04, 'triangle');
+      this.sweep(120, 40, now, 0.55, 0.16, 'sine');
+      this.noise(now, 0.45, 0.08, 'bandpass', 2200, 0.7, 700);
+      this.noise(now + 0.15, 1.1, 0.06, 'bandpass', 850, 0.5, 1700);
+    },
+
+    firework() {
+      if (!this.ctx) return;
+      const now = this.ctx.currentTime;
+      this.noise(now, 0.22, 0.05, 'highpass', 1800, 0.6);
+      this.sweep(rand(150, 220), rand(48, 70), now, 0.3, 0.07, 'sine');
+    },
+
+    click() {
+      this.beep(520, 0.05, 'sine', 0.035);
+    },
+
+    confirm() {
+      if (!this.ctx) return;
+      const now = this.ctx.currentTime;
+      this.tone(660, now, 0.1, 0.05, 'sine');
+      this.tone(990, now + 0.09, 0.16, 0.045, 'sine');
     },
 
     cheer(isBoy) {
@@ -617,6 +732,7 @@
       S.fxTime += dt;
       if (S.fxTime < 5.5 && S.fxTime >= S.nextFirework) {
         firework(rand(W * 0.12, W * 0.88), rand(H * 0.12, H * 0.42), S.winner === 'blue');
+        Sound.firework();
         S.nextFirework = S.fxTime + rand(0.5, 0.85);
       }
     }
@@ -1311,12 +1427,15 @@ function syncOptions() {
 function openSettings() {
   if (S.mode !== 'idle') return;
   if (!els.settingsModal.classList.contains('hidden')) return;
+  Sound.init();
+  Sound.click();
   tempGender = settings.gender;
   syncOptions();
   els.settingsModal.classList.remove('hidden');
 }
 
-function closeSettings() {
+function closeSettings(silent) {
+  if (!silent) Sound.click();
   els.settingsModal.classList.add('hidden');
 }
 
@@ -1325,7 +1444,8 @@ function saveSettings() {
   try {
     localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
   } catch (err) { /* ignore */ }
-  closeSettings();
+  Sound.confirm();
+  closeSettings(true);
 }
 
 function flashScreen() {
@@ -1367,11 +1487,16 @@ function startCountdown() {
   S.cam = 0.045;
   S.fxTime = 0;
   S.nextFirework = 0;
+  S.lastLeader = null;
+  S.lastOvertake = 0;
+  S.warnIndex = 0;
   S.freqB = rand(2.4, 3.4);
   S.freqP = rand(2.4, 3.4);
   S.phaseB = Math.random() * Math.PI * 2;
   S.phaseP = Math.random() * Math.PI * 2;
   S.winner = pickWinner();
+
+  Sound.ignition();
 
   smoke.length = 0;
   confetti.length = 0;
@@ -1538,6 +1663,23 @@ function update(dt, now) {
     S.pP = progress(1, u);
   }
 
+  // Live commentary: whoosh on every lead change, beeps for the final seconds.
+  if (S.mode === 'racing') {
+    const leader = S.pB >= S.pP ? 'blue' : 'pink';
+    if (S.lastLeader && leader !== S.lastLeader && S.elapsed > 0.35 && S.elapsed - S.lastOvertake > 0.45) {
+      Sound.overtake();
+      S.lastOvertake = S.elapsed;
+    }
+    S.lastLeader = leader;
+
+    const warnAt = [5, 3, 2, 1];
+    const remaining = RACE_DURATION - S.elapsed;
+    while (S.warnIndex < warnAt.length && remaining <= warnAt[S.warnIndex]) {
+      Sound.warning(warnAt[S.warnIndex]);
+      S.warnIndex++;
+    }
+  }
+
   // camera
   let target = 0.045;
   if (S.mode === 'racing' || S.mode === 'finished' || S.mode === 'revealed') {
@@ -1641,12 +1783,13 @@ els.againBtn.addEventListener('click', () => {
 
 els.homeBtn.addEventListener('click', () => {
   els.homeBtn.blur();
+  Sound.click();
   goHome();
 });
 
 els.gearBtn.addEventListener('click', openSettings);
 els.startHint.addEventListener('click', openSettings);
-els.closeSettings.addEventListener('click', closeSettings);
+els.closeSettings.addEventListener('click', () => closeSettings());
 els.saveSettings.addEventListener('click', saveSettings);
 
 els.settingsPanel.addEventListener('click', (e) => {
@@ -1654,7 +1797,7 @@ els.settingsPanel.addEventListener('click', (e) => {
   if (!btn) return;
   tempGender = btn.dataset.gender;
   syncOptions();
-  Sound.beep(640, 0.06, 'sine', 0.04);
+  Sound.click();
 });
 
 els.settingsModal.addEventListener('click', (e) => {
@@ -1662,6 +1805,9 @@ els.settingsModal.addEventListener('click', (e) => {
 });
 
 els.soundBtn.addEventListener('click', toggleSound);
+
+// Unlock audio on the first interaction so UI sounds work before the race.
+window.addEventListener('pointerdown', () => Sound.init(), { once: true });
 
 window.addEventListener('keydown', (e) => {
   if (e.repeat) return;

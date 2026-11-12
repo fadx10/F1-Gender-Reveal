@@ -1,6 +1,6 @@
 import React from 'react';
 import { GenderRevealConfig } from '../types';
-import { Play, Trophy, Volume2, VolumeX, Settings, Heart, Zap, Flag } from 'lucide-react';
+import { Play, Trophy, Volume2, VolumeX, Settings, Heart, Flag } from 'lucide-react';
 
 interface IntroScreenProps {
   config: GenderRevealConfig;
@@ -101,13 +101,9 @@ export const IntroScreen: React.FC<IntroScreenProps> = ({
               TEAM BOY RACING
             </div>
             <div className="text-[11px] sm:text-xs font-semibold text-blue-200 mt-1">
-              Blue Thunderbolt GP · Car #1
+              Car #1
             </div>
 
-            <div className="mt-3 px-3 py-1 rounded-full bg-blue-950/80 border border-blue-400/50 text-[10px] sm:text-xs text-blue-200 font-bold flex items-center gap-1.5 shadow-inner">
-              <Zap className="w-3 h-3 text-amber-400 fill-amber-400" />
-              <span>1050 HP Turbo-Hybrid</span>
-            </div>
           </div>
 
           {/* Team Girl Racing 3D Card */}
@@ -124,13 +120,9 @@ export const IntroScreen: React.FC<IntroScreenProps> = ({
               TEAM GIRL RACING
             </div>
             <div className="text-[11px] sm:text-xs font-semibold text-pink-200 mt-1">
-              Pink Velocity GP · Car #1
+              Car #1
             </div>
 
-            <div className="mt-3 px-3 py-1 rounded-full bg-pink-950/80 border border-pink-400/50 text-[10px] sm:text-xs text-pink-200 font-bold flex items-center gap-1.5 shadow-inner">
-              <Zap className="w-3 h-3 text-amber-400 fill-amber-400" />
-              <span>1050 HP Turbo-Hybrid</span>
-            </div>
           </div>
         </div>
 

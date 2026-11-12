@@ -98,3 +98,124 @@
     margin-bottom: 0.35rem;
   }
 }
+
+
+/* Reliable CSS-driven race animation: independent of canvas sizing and redraw timing. */
+.race-scene {
+  isolation: isolate;
+  background:
+    radial-gradient(ellipse at 50% 48%, rgba(30, 64, 85, 0.48), transparent 58%),
+    linear-gradient(180deg, #07111b 0%, #0b1723 55%, #050b12 100%);
+}
+.race-lights {
+  background:
+    radial-gradient(ellipse at 15% 12%, rgba(14, 165, 233, 0.17), transparent 30%),
+    radial-gradient(ellipse at 85% 12%, rgba(236, 72, 153, 0.16), transparent 30%);
+}
+.race-track {
+  height: clamp(260px, 43vh, 430px);
+  background:
+    linear-gradient(180deg, transparent 0 19%, #f8fafc 19% 20%, transparent 20% 80%, #f8fafc 80% 81%, transparent 81%),
+    repeating-linear-gradient(90deg, transparent 0 48px, rgba(255,255,255,.07) 49px 51px, transparent 52px 100px),
+    linear-gradient(180deg, #303b46, #141d27 50%, #303b46);
+}
+.race-grandstand {
+  background:
+    repeating-linear-gradient(90deg, rgba(56,189,248,.45) 0 3px, transparent 3px 14px, rgba(244,114,182,.4) 14px 17px, transparent 17px 28px),
+    linear-gradient(180deg, rgba(2,6,23,.95), rgba(15,23,42,.25));
+  opacity: .6;
+}
+.race-kerb {
+  background: repeating-linear-gradient(90deg, #ef4444 0 18px, #f8fafc 18px 36px);
+}
+.race-lane-line {
+  height: 3px;
+  background: repeating-linear-gradient(90deg, rgba(255,255,255,.7) 0 36px, transparent 36px 68px);
+  animation: race-road-flow .55s linear infinite;
+  box-shadow: 0 0 12px rgba(255,255,255,.2);
+}
+.race-finish {
+  background: repeating-conic-gradient(#fff 0% 25%, #111827 0% 50%) 0 0 / 14px 14px;
+  box-shadow: 0 0 22px rgba(255,255,255,.45);
+}
+.race-car {
+  position: absolute;
+  z-index: 10;
+  left: 5%;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: max-content;
+  will-change: transform;
+}
+.race-car-boy { top: 31%; }
+.race-car-girl { top: 57%; }
+.race-car-emoji {
+  position: relative;
+  z-index: 2;
+  display: block;
+  font-size: clamp(2.5rem, 6vw, 5rem);
+  line-height: 1;
+  filter: drop-shadow(0 9px 9px rgba(0,0,0,.55));
+  transform: scaleX(-1);
+  animation: race-car-bounce .22s ease-in-out infinite alternate;
+}
+.race-car-label {
+  position: absolute;
+  left: 0;
+  top: -18px;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .2em;
+}
+.race-car-glow {
+  position: absolute;
+  left: -8px;
+  bottom: -4px;
+  width: 72%;
+  height: 12px;
+  border-radius: 100%;
+  filter: blur(12px);
+  opacity: .7;
+}
+.race-car-winner { animation: race-winner 30s cubic-bezier(.15,.55,.25,1) forwards; }
+.race-car-chaser { animation: race-chaser 30s cubic-bezier(.15,.55,.25,1) forwards; }
+@keyframes race-road-flow {
+  from { transform: translateX(0); }
+  to { transform: translateX(-68px); }
+}
+@keyframes race-car-bounce {
+  from { translate: 0 0; }
+  to { translate: 0 -3px; }
+}
+@keyframes race-winner {
+  0% { transform: translateX(0); }
+  18% { transform: translateX(7vw); }
+  42% { transform: translateX(11vw); }
+  66% { transform: translateX(14vw); }
+  82% { transform: translateX(23vw); }
+  100% { transform: translateX(min(55vw, 620px)); }
+}
+@keyframes race-chaser {
+  0% { transform: translateX(3vw); }
+  18% { transform: translateX(8vw); }
+  42% { transform: translateX(5vw); }
+  66% { transform: translateX(4vw); }
+  82% { transform: translateX(3vw); }
+  100% { transform: translateX(0); }
+}
+@media (max-width: 640px) {
+  .race-track { height: clamp(240px, 38vh, 340px); }
+  .race-car-boy { top: 29%; }
+  .race-car-girl { top: 58%; }
+  .race-car-label { font-size: 8px; }
+}
+@media (max-height: 520px) {
+  .race-track { height: 44vh; min-height: 180px; }
+  .race-scene > div:nth-of-type(2) { padding-top: 4.5rem; }
+  .race-scene h2 { font-size: clamp(1.2rem, 4vh, 2.3rem); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .race-lane-line, .race-car-emoji { animation: none; }
+  .race-car-winner, .race-car-chaser { animation-duration: 30s; }
+}

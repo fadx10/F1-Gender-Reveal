@@ -678,12 +678,14 @@
     const phase = carIndex === 0 ? S.phaseB : S.phaseP;
 
     // Constant lead changes keep the cars nose-to-tail the whole race.
-    const env = Math.pow(Math.sin(Math.PI * u), 0.8);
-    const wobble = 0.011 * Math.sin(2 * Math.PI * freq * u + phase) * env;
+    // The wobble fades near the end so the final-second pass decides it.
+    const env = Math.pow(Math.sin(Math.PI * u), 0.8) * (1 - smoothstep(0.86, 0.95, u));
+    const wobble = 0.03 * Math.sin(2 * Math.PI * freq * u + phase) * env;
 
-    // The eventual loser leads until the final second, then the winner
-    // sneaks ahead right at the line for a photo finish.
-    const late = 0.015 * smoothstep(0.93, 1, u) - 0.004 * smoothstep(0.8, 0.93, u);
+    // Tight battle: the eventual loser leads through the last second, then the
+    // winner sneaks ahead right at the line for a photo finish.
+    const late = 0.015 * smoothstep(0.94, 1, u)
+      - 0.012 * smoothstep(0.84, 0.93, u) * (1 - smoothstep(0.94, 1, u));
     const gap = wobble + late;
 
     const winnerPos = u + gap / 2;
@@ -1675,7 +1677,7 @@ function startCountdown() {
   S.prevPP = 0;
   S.pB = 0;
   S.pP = 0;
-  S.cam = 0.045;
+  S.cam = 0;
   S.fxTime = 0;
   S.nextFirework = 0;
   S.lastLeader = null;
@@ -1879,12 +1881,11 @@ function update(dt, now) {
     }
   }
 
-  // camera
+  // camera — stay locked to the pair's midpoint so the cars hold the centre of
+  // the screen and only slide left/right while overtaking.
   let target = 0.045;
-  if (S.mode === 'racing' || S.mode === 'finished' || S.mode === 'revealed') {
-    target = (S.pB + S.pP) / 2 - 0.022;
-  }
-  const cameraSpeed = S.mode === 'racing' ? 4.5 : 2.4;
+  if (S.mode !== 'idle') target = (S.pB + S.pP) / 2;
+  const cameraSpeed = S.mode === 'racing' ? 11 : S.mode === 'countdown' ? 7 : 2.4;
   S.cam += (target - S.cam) * (1 - Math.exp(-cameraSpeed * dt));
 
   // speed readouts

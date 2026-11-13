@@ -1,5 +1,5 @@
 /* ============================================================
-   BABY GRAND PRIX — gender reveal
+   BABY GENDER REVEAL GRAND PRIX — gender reveal
    ============================================================ */
 
 :root {
@@ -140,22 +140,6 @@ canvas#fx {
   align-items: center;
   gap: 12px;
   min-width: 0;
-}
-
-.brand-mark {
-  display: grid;
-  place-items: center;
-  width: 42px;
-  height: 42px;
-  border-radius: 10px;
-  font-family: var(--font-display);
-  font-size: 15px;
-  font-weight: 900;
-  font-style: italic;
-  color: #06101f;
-  background: linear-gradient(135deg, #ffffff, #93c9ff 60%, #3fb8ff);
-  box-shadow: 0 0 24px rgba(63, 184, 255, 0.4);
-  flex-shrink: 0;
 }
 
 .brand-text {
@@ -470,7 +454,7 @@ canvas#fx {
 .hero-title {
   margin: 0;
   font-family: var(--font-display);
-  font-size: clamp(52px, 10.2vw, 132px);
+  font-size: clamp(34px, 8.4vw, 108px);
   font-weight: 900;
   font-style: italic;
   line-height: 0.9;
@@ -479,9 +463,23 @@ canvas#fx {
   text-shadow: 0 24px 80px rgba(0, 0, 0, 0.7);
 }
 
+.hero-title > span { display: block; }
+
+.hero-baby {
+  font-size: 0.72em;
+  letter-spacing: 0.18em;
+  color: #eaf4ff;
+}
+
+.hero-grand {
+  font-size: 0.72em;
+  letter-spacing: 0.14em;
+  color: #eaf4ff;
+}
+
 .hero-gradient {
-  display: inline-block;
-  padding-right: 0.08em;
+  display: block;
+  padding-right: 0.04em;
   background: linear-gradient(100deg, #9fdcff 0%, #ffffff 28%, #ffc4de 62%, #ff5fa8 100%);
   -webkit-background-clip: text;
   background-clip: text;
@@ -1145,7 +1143,6 @@ canvas#fx {
   }
   .hud-top { padding: 14px 16px 38px; }
   .brand-text { display: none; }
-  .brand-mark { width: 38px; height: 38px; font-size: 13px; }
   .timer-wrap { min-width: 120px; }
   .hud-bottom { gap: 10px; padding: 11px 13px; border-radius: 15px; }
   .team-speed { font-size: 18px; }

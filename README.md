@@ -1,6 +1,6 @@
-# F1 Gender Reveal — Baby Grand Prix Race 🏁
+# Baby Gender Reveal Grand Prix — F1 Gender Reveal Game 🏁
 
-An **F1-themed gender reveal game** for a baby boy or baby girl. Two Formula 1 cars race for **15 seconds**, trade the lead, and finish with a photo finish before the winning car announces the surprise.
+**Baby Gender Reveal Grand Prix** is an **F1-themed gender reveal game** for a baby boy or baby girl. Two Formula 1 cars race for **15 seconds**, trade the lead, and finish with a photo finish before the winning car announces the surprise.
 
 This is a free, static **Formula 1 gender reveal** web app — perfect for a baby shower, a party projector, or sending as a **surprise link** to family and friends. No app install, no build step, no backend.
 
@@ -39,6 +39,7 @@ This is a free, static **Formula 1 gender reveal** web app — perfect for a bab
 - 🔗 **Unique surprise links** such as `#r=fpza3nqmcbk9` with the result locked inside the link
 - 👶 **Baby emoji celebration** on the reveal screen
 - 🔊 **Live Web Audio sound effects:** engines, starter motor, launch skid, overtake whooshes, final-second beeps, finish thump, crowd and fireworks
+- 🎉 **Three celebration samples on the reveal:** party horn, confetti pop and baby giggle (plus the synthesised fanfare)
 - ⛶ **Fullscreen mode** for parties, TVs and projectors
 - 📱 **Responsive layout** for phones, tablets and desktops
 - 🌐 **Static hosting friendly:** no backend, database or build tools
@@ -73,7 +74,7 @@ You can send the race to someone else without them setting anything up:
 Each click creates a fresh, random-looking link:
 
 ```text
-https://yourname.github.io/baby-grand-prix/#r=fpza3nqmcbk9
+https://yourname.github.io/baby-gender-reveal-grand-prix/#r=fpza3nqmcbk9
 ```
 
 When your guest opens the link:
@@ -142,6 +143,9 @@ Tip: press the fullscreen button or `F` before starting when showing the race on
 index.html   — page structure and screens (start, race HUD, reveal, settings)
 styles.css   — layout, themes, animations and responsive rules
 app.js       — canvas race, progress curves, particles, sound, sharing and flow
+universfield-birthday-party-horn-250238.mp3          — reveal: party horn
+u_jspnqv1glx-1gift-confetti-447240.mp3               — reveal: confetti pop
+scottishperson-sound-effect-baby-laughing-01-237186.mp3 — reveal: baby giggle
 .nojekyll    — tells GitHub Pages to serve the files as-is
 README.md    — this file
 ```

@@ -1,5 +1,5 @@
 /* ============================================================
-   BABY GRAND PRIX
+   BABY GENDER REVEAL GRAND PRIX
    Two F1 cars. Fifteen seconds. One very big surprise.
    ============================================================ */
 
@@ -17,6 +17,15 @@
   const ENV_MULT = 2.35;         // extra parallax speed for the scenery
   const SETTINGS_KEY = 'bgp.settings.v1';
   const MUTE_KEY = 'bgp.muted.v1';
+
+  // Celebration sounds played when the gender is announced.
+  // `delay` staggers them so the three samples do not pile up on top of
+  // each other; `volume` keeps them balanced against the race effects.
+  const REVEAL_AUDIO = [
+    { src: 'universfield-birthday-party-horn-250238.mp3', delay: 0, volume: 0.55 },
+    { src: 'u_jspnqv1glx-1gift-confetti-447240.mp3', delay: 0.25, volume: 0.75 },
+    { src: 'scottishperson-sound-effect-baby-laughing-01-237186.mp3', delay: 0.95, volume: 0.65 },
+  ];
 
   const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
   const smoothstep = (a, b, x) => {
@@ -209,6 +218,50 @@
     noiseBuffer: null,
     engines: [],
     muted: false,
+    revealPlayers: [],
+    revealTimers: [],
+
+    prepareRevealAudio() {
+      if (this.revealPlayers.length || typeof Audio === 'undefined') return;
+      this.revealPlayers = REVEAL_AUDIO.map((cfg) => {
+        const audio = new Audio();
+        audio.src = cfg.src;
+        audio.preload = 'auto';
+        audio.volume = cfg.volume;
+        audio.muted = this.muted;
+        return audio;
+      });
+    },
+
+    playReveal() {
+      this.prepareRevealAudio();
+      this.stopReveal();
+      if (!this.revealPlayers.length || this.muted) return;
+
+      REVEAL_AUDIO.forEach((cfg, i) => {
+        const timer = setTimeout(() => {
+          const audio = this.revealPlayers[i];
+          if (!audio || this.muted) return;
+          try {
+            audio.currentTime = 0;
+            const attempt = audio.play();
+            if (attempt && typeof attempt.catch === 'function') attempt.catch(() => {});
+          } catch (err) { /* ignore blocked playback */ }
+        }, cfg.delay * 1000);
+        this.revealTimers.push(timer);
+      });
+    },
+
+    stopReveal() {
+      this.revealTimers.forEach((timer) => clearTimeout(timer));
+      this.revealTimers = [];
+      this.revealPlayers.forEach((audio) => {
+        try {
+          audio.pause();
+          audio.currentTime = 0;
+        } catch (err) { /* ignore */ }
+      });
+    },
 
     init() {
       if (this.ctx) {
@@ -496,6 +549,10 @@
       if (this.master && this.ctx) {
         this.master.gain.setTargetAtTime(muted ? 0 : 0.72, this.ctx.currentTime, 0.04);
       }
+      this.revealPlayers.forEach((audio) => {
+        audio.muted = muted;
+      });
+      if (muted) this.stopReveal();
     },
   };
 
@@ -1349,17 +1406,6 @@ function drawCarScreen(team, x, groundY, angle) {
   ctx.fillStyle = 'rgba(0,0,0,0.35)';
   ctx.fillRect(0.638, -0.113, 0.024, 0.012);
 
-  // ---- number roundel ----
-  ctx.beginPath();
-  ctx.arc(0.145, -0.232, 0.052, 0, Math.PI * 2);
-  ctx.fillStyle = 'rgba(250,253,255,0.92)';
-  ctx.fill();
-  ctx.fillStyle = '#080c14';
-  ctx.font = '900 0.08px Orbitron, sans-serif';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(team === 'blue' ? '1' : '2', 0.145, -0.228);
-
   // ---- rain light ----
   ctx.save();
   ctx.shadowColor = '#ff2d55';
@@ -1611,6 +1657,7 @@ function startCountdown() {
   if (S.mode === 'countdown' || S.mode === 'racing') return;
 
   Sound.init();
+  Sound.stopReveal();
 
   S.mode = 'countdown';
   S.countStart = performance.now();
@@ -1731,6 +1778,7 @@ function showReveal() {
   els.reveal.classList.remove('hidden');
   els.hud.classList.add('hidden');
   Sound.cheer(isBoy);
+  Sound.playReveal();
   spawnConfetti(isBoy);
   S.fxTime = 0;
   S.nextFirework = 0;
@@ -1766,6 +1814,7 @@ function goHome() {
   els.timer.textContent = '15.0';
   els.timer.classList.remove('is-urgent');
   els.startBtn.blur();
+  Sound.stopReveal();
   Sound.updateEngines(0, 0, 0);
   updateControls();
   updateHUD();
@@ -2011,6 +2060,7 @@ refreshSoundIcon();
 syncOptions();
 updateControls();
 updateHUD();
+Sound.prepareRevealAudio();
 
 if (!fullscreenSupported()) els.fullscreenBtn.style.display = 'none';
 updateFullscreenButton();
@@ -2021,7 +2071,7 @@ if (sharedGender) {
   els.gearBtn.style.display = 'none';
   const hint = els.startHint && els.startHint.closest('.hint');
   if (hint) hint.style.display = 'none';
-  document.title = 'A Surprise Awaits — Baby Grand Prix';
+  document.title = 'A Surprise Awaits — Baby Gender Reveal Grand Prix';
 }
 
 requestAnimationFrame(loop);
